@@ -65,8 +65,8 @@ all: main-build
 main-build: NRF_Module.elf secondary-outputs
 
 # Tool invocations
-NRF_Module.elf NRF_Module.map: $(OBJS) $(USER_OBJS) D:\GIT\ REPO\ADAS-Temp-Container\STM32F103C8TX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "NRF_Module.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m3 -T"D:\GIT REPO\ADAS-Temp-Container\STM32F103C8TX_FLASH.ld" --specs=nosys.specs -Wl,-Map="NRF_Module.map" -Wl,--gc-sections -static --specs=nano.specs -mfloat-abi=soft -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+NRF_Module.elf NRF_Module.map: $(OBJS) $(USER_OBJS) E:\GIT_HUB\ADAS-Temp-Container\STM32F103C8TX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-gcc -o "NRF_Module.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m3 -T"E:\GIT_HUB\ADAS-Temp-Container\STM32F103C8TX_FLASH.ld" --specs=nosys.specs -Wl,-Map="NRF_Module.map" -Wl,--gc-sections -static --specs=nano.specs -mfloat-abi=soft -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 

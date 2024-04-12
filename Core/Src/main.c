@@ -43,9 +43,11 @@ typedef enum{
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
-#define CAR_ID						0x11
-#define LOCALIZATION_OPERATION_ID	0x01
+#define CAR_ID							0x11
+#define LOCALIZATION_OPERATION_ID		0x01
 #define ASK_DIRECTION_OPERATION_ID      0x02
+#define Front_Threshold         		100
+
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
@@ -68,14 +70,14 @@ uint8_t Distances_Buffer[360] = {0};
 #define FRONT_LEFT 		5
 #define BACK_RIGHT 		6
 #define BACK_LEFT 		7
-uint8_t Obstcales_Detection[8] = {0};
-uint8_t Front_Cars_IDs[10]={0};
-uint8_t Front_Cars_IDs_Iterator = 0;
-uint8_t Back_Cars_IDs[10]={0};
-uint8_t Back_Cars_IDs_Iterator = 0;
-uint8_t Undefined_Cars_IDs[10]={0};
-uint8_t Undefined_Cars_IDs_Iterator =0;
-Node_Mode_t Role = Receiver;
+
+uint8_t My_Direction	=			0;
+uint8_t * Obstcales_Detection = 	NULL;
+uint8_t Front_Car_ID	=			0;
+uint8_t Back_Car_ID		=			0;
+Node_Mode_t Role 		= 			Receiver;
+
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -88,9 +90,10 @@ void Init_Task(void const * argument);
 void Distance_Calc(void const * argument);
 void Localization(void const * argument);
 void Algo_Check(void const * argument);
+uint16_t * _CalcAvgDistance( uint16_t * Data_Arr ) ;
 
 /* USER CODE BEGIN PFP */
-bool searchElement(int arr[], int n, int x);
+
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -103,7 +106,7 @@ char AckPayload[32] = "Acked by STM32";
 char AckPayload_Buffer[32];
 
 
-uint8_t MyRPIdata[360] = {};
+uint8_t MyRPIdata[360] = {0};
 
 
 
@@ -369,60 +372,109 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 	{
 		uint16_t Received_Data[32] = {0};
 		NRF24_read(Received_Data, 32);
-		switch(Received_Data[1]){
+
+		switch(Received_Data[1])
+		{
 		case LOCALIZATION_OPERATION_ID:
 			bool Is_Front = ((Received_Data[BACK] >= Obstcales_Detection[FRONT] - 7) &&
 					(Received_Data[BACK] <= Obstcales_Detection[FRONT] + 7)) ||
 					((Received_Data[BACK_RIGHT] >= Obstcales_Detection[FRONT_LEFT] - 7) &&
 							(Received_Data[BACK_LEFT] <= Obstcales_Detection[FRONT_RIGHT] + 7)) ;
+
+
 			bool Is_Back = ((Received_Data[FRONT] >= Obstcales_Detection[BACK] - 7) &&
 					(Received_Data[FRONT] <= Obstcales_Detection[BACK] + 7)) ||
 							((Received_Data[BACK_RIGHT] >= Obstcales_Detection[FRONT_LEFT] - 7) &&
 									(Received_Data[BACK_LEFT] <= Obstcales_Detection[FRONT_RIGHT] + 7)) ;
+
 			if(Is_Front){
-				/*
-				 * search if the car is already existed in the Frontcars Array
-				 * if yes => 	do nothing
-				 * if no  => 	put the car in the Frontcars array
-				 * */
-				Front_Cars_IDs[Front_Cars_IDs_Iterator++] = Received_Data[0];
+
+				Front_Car_ID = Received_Data[0];
 			}
 			else if(Is_Back){
-
-				/*
-				 * search if the car is already existed in the Back_Cars_IDs Array
-				 * if yes => 	do nothing
-				 * if no  => 	put the car in the Back_Cars_IDs array
-				 * */
-				Back_Cars_IDs[Back_Cars_IDs_Iterator++] = Received_Data[0];
+				Back_Car_ID = Received_Data[0];
 			}
 			else{
+
 				/*
-				 * search if the car is existed in front array cars or back array cars
-				 * if yes => 	do nothing
-				 * if no  => 	put the car in the undefined array
-				 * */
-				Undefined_Cars_IDs[Undefined_Cars_IDs_Iterator] = Received_Data[0];
+				 * Do Nothing
+				 */
 			}
 		case ASK_DIRECTION_OPERATION_ID :
-			if( )
 
+			bool TX_Flag =0;
+			bool RX_Flag =0;
+
+			NRF24_whatHappened(&TX_Flag,NULL,&RX_Flag);
+
+			if(	(CAR_ID == Received_Data[2] && RX_Flag))
+			{
+				uint8_t ASK_Direction_Frame[4] ={0};
+
+				ASK_Direction_Frame[0] = CAR_ID ;
+				ASK_Direction_Frame[1] = ASK_DIRECTION_OPERATION_ID ;
+				ASK_Direction_Frame[2] = Front_Car_ID ;
+				ASK_Direction_Frame[3] = My_Direction ;
+
+				NRF24_stopListening();
+
+				NRF24_writeAckPayload(1, ASK_Direction_Frame, 4);
+
+				NRF24_startListening();
+
+			}
+			else if ((CAR_ID == Received_Data[2] && TX_Flag))
+			{
+				if (	Received_Data[3]==	My_Direction)
+				{
+					/*Fire EEBL*/
+				}
+				else if(Received_Data[3]	!=	My_Direction)
+				{
+					/*Fire FCW*/
+				}
+				else
+				{
+					/*
+					 * Do Nothing
+					 */
+				}
+			}
+			else {
+				/*
+				 * Stop immediately
+				 */
+			}
 		default:
 			break;
 		}
 
 	}
 }
+uint16_t * _CalcAvgDistance( uint16_t * Data_Arr )
+{
+ uint16_t Local_CounterI = 0 ;
+ int16_t Local_CounterII = 0;
+ static uint16_t Local_AvgDistance[8] = {0};
 
-bool searchElement(int arr[], int n, int x) {
-	for (int i = 0; i < n; i++) {
-		if (arr[i] == x) {
-			return true; // Return true if the element is found
-		}
-	}
-	return false; // Return false if the element is not found
+ for (Local_CounterI = 0; Local_CounterI < 8; Local_CounterI++) {
+  uint32_t Local_TempI = 0; // Reset Local_TempI for each angle
+  int16_t LowerLimit  = (Local_CounterI * 45) - 3;
+  uint16_t UpperLimit = (Local_CounterI * 45) + 3;
+
+  for (Local_CounterII = LowerLimit; Local_CounterII <= UpperLimit; Local_CounterII++) {
+   // Make sure the index is within bounds (0-359)
+   uint16_t Index = (Local_CounterII + 360) % 360;
+
+   Local_TempI += Data_Arr[Index];
+  }
+
+  // Calculate average for this angle
+  Local_AvgDistance[Local_CounterI] = Local_TempI / 7;
+ }
+
+ return Local_AvgDistance;
 }
-
 /* USER CODE END 4 */
 
 /* USER CODE BEGIN Header_Init_Task */
@@ -448,7 +500,7 @@ void Init_Task(void const * argument)
 	NRF24_writeAckPayload(1, AckPayload, 32);
 	NRF24_startListening();
 
-
+	/*Add any Inits here*/
 	osThreadTerminate(Startup_TaskHandle);
 	/* Infinite loop */
 	for(;;)
@@ -468,9 +520,13 @@ void Init_Task(void const * argument)
 void Distance_Calc(void const * argument)
 {
 	/* USER CODE BEGIN Distance_Calc */
+
 	/* Infinite loop */
 	for(;;)
 	{
+		/* TODO : Arrange distances returned from the function to be :
+		 * 			Front - Back - Right - Left - FR - FL - BR - BL*/
+		Obstcales_Detection = _CalcAvgDistance(Distances_Buffer);
 		osDelay(1);
 	}
 	/* USER CODE END Distance_Calc */
@@ -495,7 +551,12 @@ void Localization(void const * argument)
 				Obstcales_Detection[FRONT_RIGHT],Obstcales_Detection[FRONT_LEFT],
 				Obstcales_Detection[BACK_RIGHT],Obstcales_Detection[BACK_LEFT]
 		};
+		NRF24_stopListening();
+
 		NRF24_write(Localization_Frame, 10);
+
+		NRF24_startListening();
+
 		osDelay(3000);
 	}
 	/* USER CODE END Localization */
@@ -507,7 +568,7 @@ void Localization(void const * argument)
  * @param argument: Not used
  * @retval None
  */
-#define Front_Threshold         100
+
 /* USER CODE END Header_Algo_Check */
 
 
@@ -515,28 +576,25 @@ void Algo_Check(void const * argument)
 {
 	/* USER CODE BEGIN Algo_Check */
 
-
-
 	/* Infinite loop */
 	for(;;)
 	{
-		uint16_t Direction_Frame[2] ={0};
+
 		if(Obstcales_Detection[FRONT] <= Front_Threshold )
 		{
+			uint8_t ASK_Direction_Frame[3] ={0};
+
+			ASK_Direction_Frame[0] = CAR_ID ;
+			ASK_Direction_Frame[1] = ASK_DIRECTION_OPERATION_ID ;
+			ASK_Direction_Frame[2] = Front_Car_ID ;
 
 			NRF24_stopListening();
-			Direction_Frame[0] = CAR_ID ;
-			Direction_Frame[1] = ASK_DIRECTION_OPERATION_ID ;
-			NRF24_write(Direction_Frame, 2) ;
+
+			NRF24_write(ASK_Direction_Frame, 3) ;
+
 			NRF24_startListening();
 
 		}
-
-
-
-
-
-
 		osDelay(1000);
 	}
 	/* USER CODE END Algo_Check */

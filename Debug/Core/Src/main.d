@@ -42,8 +42,8 @@ Core/Src/main.o: ../Core/Src/main.c ../Core/Inc/main.h \
  ../Middlewares/Third_Party/FreeRTOS/Source/include/queue.h \
  ../Middlewares/Third_Party/FreeRTOS/Source/include/event_groups.h \
  ../Middlewares/Third_Party/FreeRTOS/Source/include/timers.h \
- D:/GIT\ REPO/ADAS-Temp-Container/Drivers/ECUAL/NRF24/NRF.h \
- D:/GIT\ REPO/ADAS-Temp-Container/Drivers/ECUAL/NRF24/NRF_Private.h
+ E:/GIT_HUB/ADAS-Temp-Container/Drivers/ECUAL/NRF24/NRF.h \
+ E:/GIT_HUB/ADAS-Temp-Container/Drivers/ECUAL/NRF24/NRF_Private.h
 ../Core/Inc/main.h:
 ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal.h:
 ../Core/Inc/stm32f1xx_hal_conf.h:
@@ -88,5 +88,5 @@ Core/Src/main.o: ../Core/Src/main.c ../Core/Inc/main.h \
 ../Middlewares/Third_Party/FreeRTOS/Source/include/queue.h:
 ../Middlewares/Third_Party/FreeRTOS/Source/include/event_groups.h:
 ../Middlewares/Third_Party/FreeRTOS/Source/include/timers.h:
-D:/GIT\ REPO/ADAS-Temp-Container/Drivers/ECUAL/NRF24/NRF.h:
-D:/GIT\ REPO/ADAS-Temp-Container/Drivers/ECUAL/NRF24/NRF_Private.h:
+E:/GIT_HUB/ADAS-Temp-Container/Drivers/ECUAL/NRF24/NRF.h:
+E:/GIT_HUB/ADAS-Temp-Container/Drivers/ECUAL/NRF24/NRF_Private.h:
