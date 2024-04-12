@@ -1,6 +1,6 @@
 ################################################################################
 # Automatically-generated file. Do not edit!
-# Toolchain: GNU Tools for STM32 (10.3-2021.10)
+# Toolchain: GNU Tools for STM32 (11.3.rel1)
 ################################################################################
 
 -include ../makefile.init
@@ -9,6 +9,10 @@ RM := rm -rf
 
 # All of the sources participating in the build are defined here
 -include sources.mk
+-include Middlewares/Third_Party/FreeRTOS/Source/portable/MemMang/subdir.mk
+-include Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM3/subdir.mk
+-include Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS/subdir.mk
+-include Middlewares/Third_Party/FreeRTOS/Source/subdir.mk
 -include Drivers/STM32F1xx_HAL_Driver/Src/subdir.mk
 -include Drivers/ECUAL/NRF24/subdir.mk
 -include Core/Startup/subdir.mk
@@ -61,8 +65,8 @@ all: main-build
 main-build: NRF_Module.elf secondary-outputs
 
 # Tool invocations
-NRF_Module.elf NRF_Module.map: $(OBJS) $(USER_OBJS) F:\College\lvl\ 400\ second\Graduation\ Project\NRF\NRF_Module\STM32F103C8TX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "NRF_Module.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m3 -T"F:\College\lvl 400 second\Graduation Project\NRF\NRF_Module\STM32F103C8TX_FLASH.ld" --specs=nosys.specs -Wl,-Map="NRF_Module.map" -Wl,--gc-sections -static --specs=nano.specs -mfloat-abi=soft -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+NRF_Module.elf NRF_Module.map: $(OBJS) $(USER_OBJS) D:\GIT\ REPO\ADAS-Temp-Container\STM32F103C8TX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-gcc -o "NRF_Module.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m3 -T"D:\GIT REPO\ADAS-Temp-Container\STM32F103C8TX_FLASH.ld" --specs=nosys.specs -Wl,-Map="NRF_Module.map" -Wl,--gc-sections -static --specs=nano.specs -mfloat-abi=soft -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 

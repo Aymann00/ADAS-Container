@@ -45,6 +45,7 @@ typedef enum{
 /* USER CODE BEGIN PM */
 #define CAR_ID						0x11
 #define LOCALIZATION_OPERATION_ID	0x01
+#define ASK_DIRECTION_OPERATION_ID      0x02
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
@@ -56,6 +57,7 @@ DMA_HandleTypeDef hdma_usart1_rx;
 osThreadId Startup_TaskHandle;
 osThreadId Calc_DisHandle;
 osThreadId LocalHandle;
+osThreadId Check_AlgoHandle;
 /* USER CODE BEGIN PV */
 uint8_t Distances_Buffer[360] = {0};
 #define FRONT 			0
@@ -85,9 +87,10 @@ static void MX_USART1_UART_Init(void);
 void Init_Task(void const * argument);
 void Distance_Calc(void const * argument);
 void Localization(void const * argument);
+void Algo_Check(void const * argument);
 
 /* USER CODE BEGIN PFP */
-
+bool searchElement(int arr[], int n, int x);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -169,6 +172,10 @@ int main(void)
 	/* definition and creation of Local */
 	osThreadDef(Local, Localization, osPriorityRealtime, 0, 70);
 	LocalHandle = osThreadCreate(osThread(Local), NULL);
+
+	/* definition and creation of Check_Algo */
+	osThreadDef(Check_Algo, Algo_Check, osPriorityAboveNormal, 0, 70);
+	Check_AlgoHandle = osThreadCreate(osThread(Check_Algo), NULL);
 
 	/* USER CODE BEGIN RTOS_THREADS */
 	/* add threads, ... */
@@ -373,16 +380,33 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 							((Received_Data[BACK_RIGHT] >= Obstcales_Detection[FRONT_LEFT] - 7) &&
 									(Received_Data[BACK_LEFT] <= Obstcales_Detection[FRONT_RIGHT] + 7)) ;
 			if(Is_Front){
+				/*
+				 * search if the car is already existed in the Frontcars Array
+				 * if yes => 	do nothing
+				 * if no  => 	put the car in the Frontcars array
+				 * */
 				Front_Cars_IDs[Front_Cars_IDs_Iterator++] = Received_Data[0];
 			}
-			else if(Is_Front){
+			else if(Is_Back){
+
+				/*
+				 * search if the car is already existed in the Back_Cars_IDs Array
+				 * if yes => 	do nothing
+				 * if no  => 	put the car in the Back_Cars_IDs array
+				 * */
 				Back_Cars_IDs[Back_Cars_IDs_Iterator++] = Received_Data[0];
 			}
 			else{
-				if(s)
+				/*
+				 * search if the car is existed in front array cars or back array cars
+				 * if yes => 	do nothing
+				 * if no  => 	put the car in the undefined array
+				 * */
 				Undefined_Cars_IDs[Undefined_Cars_IDs_Iterator] = Received_Data[0];
 			}
-			break;
+		case ASK_DIRECTION_OPERATION_ID :
+			if( )
+
 		default:
 			break;
 		}
@@ -390,6 +414,14 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 	}
 }
 
+bool searchElement(int arr[], int n, int x) {
+	for (int i = 0; i < n; i++) {
+		if (arr[i] == x) {
+			return true; // Return true if the element is found
+		}
+	}
+	return false; // Return false if the element is not found
+}
 
 /* USER CODE END 4 */
 
@@ -467,6 +499,47 @@ void Localization(void const * argument)
 		osDelay(3000);
 	}
 	/* USER CODE END Localization */
+}
+
+/* USER CODE BEGIN Header_Algo_Check */
+/**
+ * @brief Function implementing the Check_Algo thread.
+ * @param argument: Not used
+ * @retval None
+ */
+#define Front_Threshold         100
+/* USER CODE END Header_Algo_Check */
+
+
+void Algo_Check(void const * argument)
+{
+	/* USER CODE BEGIN Algo_Check */
+
+
+
+	/* Infinite loop */
+	for(;;)
+	{
+		uint16_t Direction_Frame[2] ={0};
+		if(Obstcales_Detection[FRONT] <= Front_Threshold )
+		{
+
+			NRF24_stopListening();
+			Direction_Frame[0] = CAR_ID ;
+			Direction_Frame[1] = ASK_DIRECTION_OPERATION_ID ;
+			NRF24_write(Direction_Frame, 2) ;
+			NRF24_startListening();
+
+		}
+
+
+
+
+
+
+		osDelay(1000);
+	}
+	/* USER CODE END Algo_Check */
 }
 
 /**
