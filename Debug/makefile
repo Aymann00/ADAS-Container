@@ -11,7 +11,7 @@ RM := rm -rf
 -include sources.mk
 -include Middlewares/Third_Party/FreeRTOS/Source/portable/MemMang/subdir.mk
 -include Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM3/subdir.mk
--include Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS/subdir.mk
+-include Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2/subdir.mk
 -include Middlewares/Third_Party/FreeRTOS/Source/subdir.mk
 -include Drivers/STM32F1xx_HAL_Driver/Src/subdir.mk
 -include Drivers/ECUAL/NRF24/subdir.mk
@@ -65,8 +65,8 @@ all: main-build
 main-build: NRF_Module.elf secondary-outputs
 
 # Tool invocations
-NRF_Module.elf NRF_Module.map: $(OBJS) $(USER_OBJS) E:\GIT_HUB\ADAS-Temp-Container\STM32F103C8TX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "NRF_Module.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m3 -T"E:\GIT_HUB\ADAS-Temp-Container\STM32F103C8TX_FLASH.ld" --specs=nosys.specs -Wl,-Map="NRF_Module.map" -Wl,--gc-sections -static --specs=nano.specs -mfloat-abi=soft -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+NRF_Module.elf NRF_Module.map: $(OBJS) $(USER_OBJS) C:\Users\Neuve\Desktop\ADAS_Project\ADAS-Temp-Container\STM32F103C8TX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-gcc -o "NRF_Module.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m3 -T"C:\Users\Neuve\Desktop\ADAS_Project\ADAS-Temp-Container\STM32F103C8TX_FLASH.ld" --specs=nosys.specs -Wl,-Map="NRF_Module.map" -Wl,--gc-sections -static --specs=nano.specs -mfloat-abi=soft -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 
