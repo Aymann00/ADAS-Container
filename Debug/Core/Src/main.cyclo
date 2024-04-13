@@ -8,8 +8,8 @@
 ../Core/Src/main.c:511:6:HAL_UART_RxCpltCallback	1
 ../Core/Src/main.c:517:11:_CalcAvgDistance	3
 ../Core/Src/main.c:550:6:Init_Task	1
-../Core/Src/main.c:583:6:Distance_Calc	1
-../Core/Src/main.c:606:6:Localization	1
-../Core/Src/main.c:641:6:Algo_Check	2
-../Core/Src/main.c:680:6:HAL_TIM_PeriodElapsedCallback	2
-../Core/Src/main.c:697:6:Error_Handler	1
+../Core/Src/main.c:584:6:Distance_Calc	1
+../Core/Src/main.c:607:6:Localization	1
+../Core/Src/main.c:642:6:Algo_Check	2
+../Core/Src/main.c:681:6:HAL_TIM_PeriodElapsedCallback	2
+../Core/Src/main.c:698:6:Error_Handler	1

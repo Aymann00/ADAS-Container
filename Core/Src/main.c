@@ -83,14 +83,14 @@ const osThreadAttr_t Calc_Dis_attributes = {
 osThreadId_t LocalHandle;
 const osThreadAttr_t Local_attributes = {
   .name = "Local",
-  .stack_size = 70 * 4,
+  .stack_size = 128 * 4,
   .priority = (osPriority_t) osPriorityNormal,
 };
 /* Definitions for Check_Algo */
 osThreadId_t Check_AlgoHandle;
 const osThreadAttr_t Check_Algo_attributes = {
   .name = "Check_Algo",
-  .stack_size = 70 * 4,
+  .stack_size = 128 * 4,
   .priority = (osPriority_t) osPriorityAboveNormal,
 };
 /* Definitions for NRF_Mutex */
@@ -423,7 +423,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
 	if(GPIO_Pin == GPIO_PIN_2)
 	{
-		uint16_t Received_Data[32] = {0};
+		uint8_t Received_Data[32] = {0};
 
 		osMutexAcquire(NRF_MutexHandle, HAL_MAX_DELAY);
 		NRF24_read(Received_Data, 32);
@@ -435,13 +435,13 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 			bool Is_Front = ((Received_Data[BACK] >= Obstcales_Detection[FRONT] - 7) &&
 					(Received_Data[BACK] <= Obstcales_Detection[FRONT] + 7)) ||
 					((Received_Data[BACK_RIGHT] >= Obstcales_Detection[FRONT_LEFT] - 7) &&
-							(Received_Data[BACK_LEFT] <= Obstcales_Detection[FRONT_RIGHT] + 7)) ;
+					(Received_Data[BACK_LEFT] <= Obstcales_Detection[FRONT_RIGHT] + 7)) ;
 
 
 			bool Is_Back = ((Received_Data[FRONT] >= Obstcales_Detection[BACK] - 7) &&
 					(Received_Data[FRONT] <= Obstcales_Detection[BACK] + 7)) ||
-							((Received_Data[BACK_RIGHT] >= Obstcales_Detection[FRONT_LEFT] - 7) &&
-									(Received_Data[BACK_LEFT] <= Obstcales_Detection[FRONT_RIGHT] + 7)) ;
+					((Received_Data[BACK_RIGHT] >= Obstcales_Detection[FRONT_LEFT] - 7) &&
+					(Received_Data[BACK_LEFT] <= Obstcales_Detection[FRONT_RIGHT] + 7)) ;
 
 			if(Is_Front){
 
@@ -568,6 +568,7 @@ void Init_Task(void *argument)
 	osMutexRelease(NRF_MutexHandle);
 
 	/*Add any Inits here*/
+	/*Stack Size for this Task = 348 B*/
 	osThreadTerminate(Startup_TaskHandle);
 
   /* USER CODE END 5 */
@@ -589,7 +590,7 @@ void Distance_Calc(void *argument)
 	{
 		/* Wait on DMA Interrupt On Receive to Come */
 		osEventFlagsWait( EventGroupHandle , DistanceCalcOnDMA , osFlagsWaitAny , HAL_MAX_DELAY ) ;
-		/* TODO : Arrange distances returned from the function to be :
+		/* Arrange distances returned from the function to be :
 		 * 			Front - Back - Right - Left - FR - FL - BR - BL*/
 		Obstcales_Detection = _CalcAvgDistance(Distances_Buffer);
 	}
