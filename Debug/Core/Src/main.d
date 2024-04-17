@@ -34,8 +34,8 @@ Core/Src/main.o: ../Core/Src/main.c ../Core/Inc/main.h \
  ../Middlewares/Third_Party/FreeRTOS/Source/include/deprecated_definitions.h \
  ../Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM3/portmacro.h \
  ../Middlewares/Third_Party/FreeRTOS/Source/include/mpu_wrappers.h \
- E:/GIT_HUB/ADAS-Temp-Container/Drivers/ECUAL/NRF24/NRF.h \
- E:/GIT_HUB/ADAS-Temp-Container/Drivers/ECUAL/NRF24/NRF_Private.h
+ F:/College/lvl\ 400\ second/Graduation\ Project/GitHub/Temp/ADAS-Temp-Container/Drivers/ECUAL/NRF24/NRF.h \
+ F:/College/lvl\ 400\ second/Graduation\ Project/GitHub/Temp/ADAS-Temp-Container/Drivers/ECUAL/NRF24/NRF_Private.h
 ../Core/Inc/main.h:
 ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal.h:
 ../Core/Inc/stm32f1xx_hal_conf.h:
@@ -72,5 +72,5 @@ Core/Src/main.o: ../Core/Src/main.c ../Core/Inc/main.h \
 ../Middlewares/Third_Party/FreeRTOS/Source/include/deprecated_definitions.h:
 ../Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM3/portmacro.h:
 ../Middlewares/Third_Party/FreeRTOS/Source/include/mpu_wrappers.h:
-E:/GIT_HUB/ADAS-Temp-Container/Drivers/ECUAL/NRF24/NRF.h:
-E:/GIT_HUB/ADAS-Temp-Container/Drivers/ECUAL/NRF24/NRF_Private.h:
+F:/College/lvl\ 400\ second/Graduation\ Project/GitHub/Temp/ADAS-Temp-Container/Drivers/ECUAL/NRF24/NRF.h:
+F:/College/lvl\ 400\ second/Graduation\ Project/GitHub/Temp/ADAS-Temp-Container/Drivers/ECUAL/NRF24/NRF_Private.h:
