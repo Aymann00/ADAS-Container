@@ -36,7 +36,7 @@ extern "C" {
 
 /* Exported types ------------------------------------------------------------*/
 /* USER CODE BEGIN ET */
-
+uint16_t * _CalcAvgDistance( uint16_t * Data_Arr );
 /* USER CODE END ET */
 
 /* Exported constants --------------------------------------------------------*/

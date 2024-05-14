@@ -68,7 +68,7 @@ typedef enum
 #define LOCALIZATION_OPERATION_ID		0x01	/* ID For Localization Operation */
 #define ASK_DIRECTION_OPERATION_ID      0x02	/* ID For Request Direction */
 #define Front_Threshold         		100		/* Front Distance Threshold */
-
+#define TOTAL_ANGLES					360
 /*TODO : review angles & Thresholds for all algorithms*/
 #define BSW_Minimum_Angle_L				90
 #define BSW_Maximium_Angle_L			135
@@ -172,8 +172,8 @@ const osEventFlagsAttr_t EventGroup_attributes = {
 };
 /* USER CODE BEGIN PV */
 /* Distances Sent From Lidar of the 360 Degrees */
-uint8_t Distances_Buffer[360] = {0};
-
+uint8_t Distances_Buffer_str[TOTAL_ANGLES][5] = {{0}};
+uint16_t Distances_Buffer[TOTAL_ANGLES] = {0};
 /* Indicies of Directions in the Final Calculated Average Distances Array
  *
  */
@@ -188,7 +188,7 @@ uint8_t Distances_Buffer[360] = {0};
 
 
 uint8_t My_Direction	=			0;
-uint8_t * Obstcales_Detection = 	NULL;
+uint16_t * Obstcales_Detection = 	NULL;
 uint8_t Front_Car_ID	=			0;
 uint8_t Back_Car_ID		=			0;
 
@@ -588,11 +588,11 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
  * @param	: Data_Arr --> Total Array Received From Rasberrypi of 360 Elements
  * @return	: An Array of 8 Elements Each element is an Average Distance @ a Pre-defined Angles
  */
-uint8_t * _CalcAvgDistance( uint8_t * Data_Arr )
+uint16_t * _CalcAvgDistance( uint16_t * Data_Arr )
 {
 	uint16_t Local_CounterI = 0 ;
 	int16_t Local_CounterII = 0;
-	static uint8_t Local_AvgDistance[8] = {0};
+	static uint16_t Local_AvgDistance[8] = {0};
 
 	for (Local_CounterI = 0; Local_CounterI < 8; Local_CounterI++) {
 		uint32_t Local_TempI = 0; // Reset Local_TempI for each angle
@@ -601,7 +601,7 @@ uint8_t * _CalcAvgDistance( uint8_t * Data_Arr )
 
 		for (Local_CounterII = LowerLimit; Local_CounterII <= UpperLimit; Local_CounterII++) {
 			// Make sure the index is within bounds (0-359)
-			uint16_t Index = (Local_CounterII + 360) % 360;
+			uint16_t Index = (Local_CounterII + TOTAL_ANGLES) % TOTAL_ANGLES;
 
 			Local_TempI += Data_Arr[Index];
 		}
@@ -626,7 +626,7 @@ void Init_Task(void *argument)
 	/* USER CODE BEGIN 5 */
 
 	/* Initialize DMA with UART to Generate Interrupt When Receiving all 360 Angle Distances */
-	HAL_UART_Receive_DMA(&huart1, Distances_Buffer, 360);
+	HAL_UART_Receive_DMA(&huart1, Distances_Buffer_str, (uint16_t)(TOTAL_ANGLES*5));
 	//NRF Module Initialization -> Less Then 0.5 Sec
 	/* Protecting Shared Resource -> NRF Module
 	 *  */
@@ -668,6 +668,12 @@ void Distance_Calc(void *argument)
 	{
 		/* Wait on DMA Interrupt On Receive to Come */
 		osEventFlagsWait( EventGroupHandle , DistanceCalcOnDMA , osFlagsWaitAny , HAL_MAX_DELAY ) ;
+
+		/* Convert Strings to Integers */
+		for( uint16_t LocalItterator = 0 ; LocalItterator < TOTAL_ANGLES ; LocalItterator++ )
+		{
+			Distances_Buffer[LocalItterator] = atoi(Distances_Buffer_str[LocalItterator]) ;
+		}
 		/* Arrange distances returned from the function to be :
 		 * 			Front - Back - Right - Left - FR - FL - BR - BL*/
 		Obstcales_Detection = _CalcAvgDistance(Distances_Buffer);
@@ -791,7 +797,7 @@ void BSW_Check(void *argument)
 				Angle_Iterator >= BSW_Minimum_Angle_L ;
 				Angle_Iterator--)
 		{
-			if (Distances_Buffer[Angle_Iterator] <= BSW_Threshold)
+			if ( ( 0 != Distances_Buffer[Angle_Iterator] ) && (Distances_Buffer[Angle_Iterator] <= BSW_Threshold ))
 			{
 				/*break the loop and invoke BSW Left warning*/
 				Local_BSWLeft = true ;
@@ -803,7 +809,7 @@ void BSW_Check(void *argument)
 				Angle_Iterator <= BSW_Maximium_Angle_R ;
 				Angle_Iterator++)
 		{
-			if (Distances_Buffer[Angle_Iterator] <= BSW_Threshold)
+			if ( ( 0 != Distances_Buffer[Angle_Iterator] ) && (Distances_Buffer[Angle_Iterator] <= BSW_Threshold) )
 			{
 				/*break the loop and invoke BSW Left warning*/
 				Local_BSWRight = true;
@@ -871,7 +877,7 @@ void DPW_Check(void *argument)
 				Angle_Iterator >= DPW_Minimum_Angle_L ;
 				Angle_Iterator--)
 		{
-			if (Distances_Buffer[Angle_Iterator] <= DPW_Threshold)
+			if ( ( 0 != Distances_Buffer[Angle_Iterator] ) && (Distances_Buffer[Angle_Iterator] <= DPW_Threshold))
 			{
 				/*break the loop and invoke DPW Left warning*/
 				Local_DPWLeft = true;
@@ -883,7 +889,7 @@ void DPW_Check(void *argument)
 				Angle_Iterator <= DPW_Maximium_Angle_R ;
 				Angle_Iterator++)
 		{
-			if (Distances_Buffer[Angle_Iterator] <= DPW_Threshold)
+			if ( ( 0 != Distances_Buffer[Angle_Iterator] ) && (Distances_Buffer[Angle_Iterator] <= DPW_Threshold) )
 			{
 				/*break the loop and invoke DPW Left warning*/
 				Local_DPWRight = true;
