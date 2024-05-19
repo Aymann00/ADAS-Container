@@ -67,6 +67,8 @@ typedef enum
 #define ASK_DIRECTION_OPERATION_ID      0x02	/* ID For Request Direction */
 #define Front_Threshold         		100		/* Front Distance Threshold */
 #define TOTAL_ANGLES					360
+#define LOCALIZATION_TOLERANCE_VALUE	100
+
 /*TODO : review angles & Thresholds for all algorithms*/
 #define BSW_Minimum_Angle_L				90
 #define BSW_Maximium_Angle_L			135
@@ -182,14 +184,15 @@ uint16_t Distances_Buffer[TOTAL_ANGLES] = {0};
 /* Indicies of Directions in the Final Calculated Average Distances Array
  *
  */
-#define FRONT 			0
-#define FRONT_LEFT 		1
-#define LEFT 			2
-#define BACK_LEFT 		3
-#define BACK 			4
-#define BACK_RIGHT 		5
-#define RIGHT 			6
 #define FRONT_RIGHT 	7
+#define FRONT 			6
+#define FRONT_LEFT 		5
+#define LEFT 			4
+#define BACK_LEFT 		3
+#define BACK 			2
+#define BACK_RIGHT 		1
+#define RIGHT 			0
+
 
 
 uint8_t My_Direction	=			0;
@@ -976,23 +979,33 @@ void Wireless_Receiving(void *argument)
 			switch(Received_Data[1])
 			{
 			case LOCALIZATION_OPERATION_ID:
-				bool Is_Front = ((Received_Data[BACK+2] >= Obstcales_Detection[FRONT] - 7) &&
-						(Received_Data[BACK+2] <= Obstcales_Detection[FRONT] + 7)) ||
-						((Received_Data[BACK_RIGHT+2] >= Obstcales_Detection[FRONT_LEFT] - 7) &&
-								(Received_Data[BACK_LEFT+2] <= Obstcales_Detection[FRONT_RIGHT] + 7)) ;
+				bool Is_Front = ((Received_Data[BACK+2] >= Obstcales_Detection[FRONT] - LOCALIZATION_TOLERANCE_VALUE) &&
+						(Received_Data[BACK+2] <= Obstcales_Detection[FRONT] + LOCALIZATION_TOLERANCE_VALUE)) ||
+						((Received_Data[BACK_RIGHT+2] >= Obstcales_Detection[FRONT_LEFT] - LOCALIZATION_TOLERANCE_VALUE) &&
+								(Received_Data[BACK_LEFT+2] <= Obstcales_Detection[FRONT_RIGHT] + LOCALIZATION_TOLERANCE_VALUE)) ;
 
 
-				bool Is_Back = ((Received_Data[FRONT+2] >= Obstcales_Detection[BACK] - 7) &&
-						(Received_Data[FRONT+2] <= Obstcales_Detection[BACK] + 7)) ||
-								((Received_Data[BACK_RIGHT+2] >= Obstcales_Detection[FRONT_LEFT] - 7) &&
-										(Received_Data[BACK_LEFT+2] <= Obstcales_Detection[FRONT_RIGHT] + 7)) ;
+				bool Is_Back = ((Received_Data[FRONT+2] >= Obstcales_Detection[BACK] - LOCALIZATION_TOLERANCE_VALUE) &&
+						(Received_Data[FRONT+2] <= Obstcales_Detection[BACK] + LOCALIZATION_TOLERANCE_VALUE)) ||
+								((Received_Data[BACK_RIGHT+2] >= Obstcales_Detection[FRONT_LEFT] - LOCALIZATION_TOLERANCE_VALUE) &&
+										(Received_Data[BACK_LEFT+2] <= Obstcales_Detection[FRONT_RIGHT] + LOCALIZATION_TOLERANCE_VALUE)) ;
 
 				if(Is_Front){
 
 					Front_Car_ID = Received_Data[0];
+					if( Received_Data[0] == Back_Car_ID )
+					{
+						/* Reset */
+						Back_Car_ID = 0;
+					}
 				}
 				else if(Is_Back){
 					Back_Car_ID = Received_Data[0];
+					if( Received_Data[0] == Front_Car_ID )
+					{
+						/* Reset */
+						Front_Car_ID = 0;
+					}
 				}
 				else{
 
@@ -1074,6 +1087,7 @@ void FCW_Algorithm(void *argument)
 
 		/* Implement the Algorithm
 		 * */
+		/* TODO : Raspberry pi Receiving should be on more than one serial */
 	}
 	/* USER CODE END FCW_Algorithm */
 }
@@ -1093,8 +1107,8 @@ void EEBL_Algorithm(void *argument)
 	{
 		osEventFlagsWait(EventGroupHandle, EEBL_ASSERTED , osFlagsWaitAny , HAL_MAX_DELAY ) ;
 
-				/* Implement the Algorithm
-				 * */
+		/* Implement the Algorithm
+		 * */
 	}
 	/* USER CODE END EEBL_Algorithm */
 }
