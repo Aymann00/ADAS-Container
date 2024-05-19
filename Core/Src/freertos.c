@@ -44,7 +44,7 @@
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN Variables */
-extern TIM_HandleTypeDef htim3;
+
 /* USER CODE END Variables */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -61,13 +61,12 @@ void vApplicationIdleHook(void);
 /* Functions needed when configGENERATE_RUN_TIME_STATS is on */
 __weak void configureTimerForRunTimeStats(void)
 {
-	HAL_TIM_Base_Start_IT(&htim3);
+
 }
 
-extern volatile unsigned long ulHighFrequencyTimerTicks;
 __weak unsigned long getRunTimeCounterValue(void)
 {
-return ulHighFrequencyTimerTicks;
+return 0;
 }
 /* USER CODE END 1 */
 

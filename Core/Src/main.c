@@ -8,6 +8,11 @@
  *
  * Copyright (c) 2024 STMicroelectronics.
  * All rights reserved.
+ *
+ * This software is licensed under terms that can be found in the LICENSE file
+ * in the root directory of this software component.
+ * If no LICENSE file comes with this software, it is provided AS-IS.
+ *
  ******************************************************************************
  */
 /* USER CODE END Header */
@@ -25,13 +30,6 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-
-/*typedef enum
-{
-
-}Direction_t;
- */
-
 /**
  * @enum  : @EventBits_t
  * @brief : Contains The Bits of the Event Group
@@ -97,6 +95,13 @@ TIM_HandleTypeDef htim3;
 UART_HandleTypeDef huart1;
 DMA_HandleTypeDef hdma_usart1_rx;
 
+/* Definitions for defaultTask */
+osThreadId_t defaultTaskHandle;
+const osThreadAttr_t defaultTask_attributes = {
+		.name = "defaultTask",
+		.stack_size = 128 * 4,
+		.priority = (osPriority_t) osPriorityNormal,
+};
 /* Definitions for Startup_Task */
 osThreadId_t Startup_TaskHandle;
 const osThreadAttr_t Startup_Task_attributes = {
@@ -111,10 +116,10 @@ const osThreadAttr_t Calc_Dis_attributes = {
 		.stack_size = 128 * 4,
 		.priority = (osPriority_t) osPriorityAboveNormal,
 };
-/* Definitions for Local */
-osThreadId_t LocalHandle;
-const osThreadAttr_t Local_attributes = {
-		.name = "Local",
+/* Definitions for Local_Task */
+osThreadId_t Local_TaskHandle;
+const osThreadAttr_t Local_Task_attributes = {
+		.name = "Local_Task",
 		.stack_size = 128 * 4,
 		.priority = (osPriority_t) osPriorityNormal,
 };
@@ -139,24 +144,24 @@ const osThreadAttr_t DPW_Algo_attributes = {
 		.stack_size = 128 * 4,
 		.priority = (osPriority_t) osPriorityBelowNormal,
 };
-/* Definitions for Receive */
-osThreadId_t ReceiveHandle;
-const osThreadAttr_t Receive_attributes = {
-		.name = "Receive",
+/* Definitions for Receiveing */
+osThreadId_t ReceiveingHandle;
+const osThreadAttr_t Receiveing_attributes = {
+		.name = "Receiveing",
 		.stack_size = 128 * 4,
 		.priority = (osPriority_t) osPriorityLow,
 };
-/* Definitions for FCW */
-osThreadId_t FCWHandle;
-const osThreadAttr_t FCW_attributes = {
-		.name = "FCW",
+/* Definitions for FCW_Algo */
+osThreadId_t FCW_AlgoHandle;
+const osThreadAttr_t FCW_Algo_attributes = {
+		.name = "FCW_Algo",
 		.stack_size = 128 * 4,
 		.priority = (osPriority_t) osPriorityNormal,
 };
-/* Definitions for EEBL */
-osThreadId_t EEBLHandle;
-const osThreadAttr_t EEBL_attributes = {
-		.name = "EEBL",
+/* Definitions for EEBL_Algo */
+osThreadId_t EEBL_AlgoHandle;
+const osThreadAttr_t EEBL_Algo_attributes = {
+		.name = "EEBL_Algo",
 		.stack_size = 128 * 4,
 		.priority = (osPriority_t) osPriorityLow,
 };
@@ -193,7 +198,6 @@ uint8_t Front_Car_ID	=			0;
 uint8_t Back_Car_ID		=			0;
 
 
-
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -201,17 +205,18 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_DMA_Init(void);
 static void MX_SPI1_Init(void);
-static void MX_USART1_UART_Init(void);
 static void MX_TIM3_Init(void);
+static void MX_USART1_UART_Init(void);
+void StartDefaultTask(void *argument);
 void Init_Task(void *argument);
 void Distance_Calc(void *argument);
 void Localization(void *argument);
-void Algo_Check(void *argument);
-void BSW_Check(void *argument);
-void DPW_Check(void *argument);
-void WirelessReceive(void *argument);
-void FCW_Task(void *argument);
-void EEBL_Task(void *argument);
+void Check_Algorithm(void *argument);
+void BSW_Algorithm(void *argument);
+void DPW_Algorithm(void *argument);
+void Wireless_Receiving(void *argument);
+void FCW_Algorithm(void *argument);
+void EEBL_Algorithm(void *argument);
 
 /* USER CODE BEGIN PFP */
 
@@ -219,13 +224,11 @@ void EEBL_Task(void *argument);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
 uint64_t RxpipeAddrs = 0x11223344AA;
 char myRxData[32];
 char myTxData[32] = "Hello From STM32";
 char AckPayload[32] = "Acked by STM32";
 char AckPayload_Buffer[32];
-
 /* USER CODE END 0 */
 
 /**
@@ -258,8 +261,8 @@ int main(void)
 	MX_GPIO_Init();
 	MX_DMA_Init();
 	MX_SPI1_Init();
-	MX_USART1_UART_Init();
 	MX_TIM3_Init();
+	MX_USART1_UART_Init();
 	/* USER CODE BEGIN 2 */
 
 	/* USER CODE END 2 */
@@ -287,32 +290,35 @@ int main(void)
 	/* USER CODE END RTOS_QUEUES */
 
 	/* Create the thread(s) */
+	/* creation of defaultTask */
+	defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
+
 	/* creation of Startup_Task */
 	Startup_TaskHandle = osThreadNew(Init_Task, NULL, &Startup_Task_attributes);
 
 	/* creation of Calc_Dis */
 	Calc_DisHandle = osThreadNew(Distance_Calc, NULL, &Calc_Dis_attributes);
 
-	/* creation of Local */
-	LocalHandle = osThreadNew(Localization, NULL, &Local_attributes);
+	/* creation of Local_Task */
+	Local_TaskHandle = osThreadNew(Localization, NULL, &Local_Task_attributes);
 
 	/* creation of Check_Algo */
-	Check_AlgoHandle = osThreadNew(Algo_Check, NULL, &Check_Algo_attributes);
+	Check_AlgoHandle = osThreadNew(Check_Algorithm, NULL, &Check_Algo_attributes);
 
 	/* creation of BSW_Algo */
-	BSW_AlgoHandle = osThreadNew(BSW_Check, NULL, &BSW_Algo_attributes);
+	BSW_AlgoHandle = osThreadNew(BSW_Algorithm, NULL, &BSW_Algo_attributes);
 
 	/* creation of DPW_Algo */
-	DPW_AlgoHandle = osThreadNew(DPW_Check, NULL, &DPW_Algo_attributes);
+	DPW_AlgoHandle = osThreadNew(DPW_Algorithm, NULL, &DPW_Algo_attributes);
 
-	/* creation of Receive */
-	ReceiveHandle = osThreadNew(WirelessReceive, NULL, &Receive_attributes);
+	/* creation of Receiveing */
+	ReceiveingHandle = osThreadNew(Wireless_Receiving, NULL, &Receiveing_attributes);
 
-	/* creation of FCW */
-	FCWHandle = osThreadNew(FCW_Task, NULL, &FCW_attributes);
+	/* creation of FCW_Algo */
+	FCW_AlgoHandle = osThreadNew(FCW_Algorithm, NULL, &FCW_Algo_attributes);
 
-	/* creation of EEBL */
-	EEBLHandle = osThreadNew(EEBL_Task, NULL, &EEBL_attributes);
+	/* creation of EEBL_Algo */
+	EEBL_AlgoHandle = osThreadNew(EEBL_Algorithm, NULL, &EEBL_Algo_attributes);
 
 	/* USER CODE BEGIN RTOS_THREADS */
 	/* add threads, ... */
@@ -333,11 +339,10 @@ int main(void)
 	/* USER CODE BEGIN WHILE */
 	while (1)
 	{
+		/* USER CODE END WHILE */
 
+		/* USER CODE BEGIN 3 */
 	}
-	/* USER CODE END WHILE */
-
-	/* USER CODE BEGIN 3 */
 	/* USER CODE END 3 */
 }
 
@@ -350,16 +355,22 @@ void SystemClock_Config(void)
 	RCC_OscInitTypeDef RCC_OscInitStruct = {0};
 	RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
 
+	/** Configure the main internal regulator output voltage
+	 */
+	__HAL_RCC_PWR_CLK_ENABLE();
+	__HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
+
 	/** Initializes the RCC Oscillators according to the specified parameters
 	 * in the RCC_OscInitTypeDef structure.
 	 */
 	RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
 	RCC_OscInitStruct.HSEState = RCC_HSE_ON;
-	RCC_OscInitStruct.HSEPredivValue = RCC_HSE_PREDIV_DIV1;
-	RCC_OscInitStruct.HSIState = RCC_HSI_ON;
 	RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
 	RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
-	RCC_OscInitStruct.PLL.PLLMUL = RCC_PLL_MUL9;
+	RCC_OscInitStruct.PLL.PLLM = 25;
+	RCC_OscInitStruct.PLL.PLLN = 144;
+	RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
+	RCC_OscInitStruct.PLL.PLLQ = 4;
 	if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
 	{
 		Error_Handler();
@@ -480,7 +491,7 @@ static void MX_USART1_UART_Init(void)
 
 	/* USER CODE END USART1_Init 1 */
 	huart1.Instance = USART1;
-	huart1.Init.BaudRate = 9600;
+	huart1.Init.BaudRate = 115200;
 	huart1.Init.WordLength = UART_WORDLENGTH_8B;
 	huart1.Init.StopBits = UART_STOPBITS_1;
 	huart1.Init.Parity = UART_PARITY_NONE;
@@ -504,12 +515,12 @@ static void MX_DMA_Init(void)
 {
 
 	/* DMA controller clock enable */
-	__HAL_RCC_DMA1_CLK_ENABLE();
+	__HAL_RCC_DMA2_CLK_ENABLE();
 
 	/* DMA interrupt init */
-	/* DMA1_Channel5_IRQn interrupt configuration */
-	HAL_NVIC_SetPriority(DMA1_Channel5_IRQn, 5, 0);
-	HAL_NVIC_EnableIRQ(DMA1_Channel5_IRQn);
+	/* DMA2_Stream2_IRQn interrupt configuration */
+	HAL_NVIC_SetPriority(DMA2_Stream2_IRQn, 5, 0);
+	HAL_NVIC_EnableIRQ(DMA2_Stream2_IRQn);
 
 }
 
@@ -525,7 +536,7 @@ static void MX_GPIO_Init(void)
 	/* USER CODE END MX_GPIO_Init_1 */
 
 	/* GPIO Ports Clock Enable */
-	__HAL_RCC_GPIOD_CLK_ENABLE();
+	__HAL_RCC_GPIOH_CLK_ENABLE();
 	__HAL_RCC_GPIOA_CLK_ENABLE();
 
 	/*Configure GPIO pin Output Level */
@@ -614,17 +625,34 @@ uint16_t * _CalcAvgDistance( uint16_t * Data_Arr )
 }
 /* USER CODE END 4 */
 
+/* USER CODE BEGIN Header_StartDefaultTask */
+/**
+ * @brief  Function implementing the defaultTask thread.
+ * @param  argument: Not used
+ * @retval None
+ */
+/* USER CODE END Header_StartDefaultTask */
+void StartDefaultTask(void *argument)
+{
+	/* USER CODE BEGIN 5 */
+	/* Infinite loop */
+	for(;;)
+	{
+		osDelay(1);
+	}
+	/* USER CODE END 5 */
+}
+
 /* USER CODE BEGIN Header_Init_Task */
 /**
- * @brief  Function implementing the Startup Operation for RTOS Project
- * @param  argument: Not used
+ * @brief Function implementing the Startup_Task thread.
+ * @param argument: Not used
  * @retval None
  */
 /* USER CODE END Header_Init_Task */
 void Init_Task(void *argument)
 {
-	/* USER CODE BEGIN 5 */
-
+	/* USER CODE BEGIN Init_Task */
 	/* Initialize DMA with UART to Generate Interrupt When Receiving all 360 Angle Distances */
 	HAL_UART_Receive_DMA(&huart1, Distances_Buffer_str, (uint16_t)(TOTAL_ANGLES*5));
 	//NRF Module Initialization -> Less Then 0.5 Sec
@@ -649,12 +677,12 @@ void Init_Task(void *argument)
 	/* Terminating StartupTask as It is No longer Important in the Sys */
 	osThreadTerminate(Startup_TaskHandle);
 
-	/* USER CODE END 5 */
+	/* USER CODE END Init_Task */
 }
 
 /* USER CODE BEGIN Header_Distance_Calc */
 /**
- * @brief Function implementing Average Distance Calculation After Receiving The Main Distances Array
+ * @brief Function implementing the Calc_Dis thread.
  * @param argument: Not used
  * @retval None
  */
@@ -662,7 +690,6 @@ void Init_Task(void *argument)
 void Distance_Calc(void *argument)
 {
 	/* USER CODE BEGIN Distance_Calc */
-
 	/* Infinite loop */
 	for(;;)
 	{
@@ -688,7 +715,7 @@ void Distance_Calc(void *argument)
 
 /* USER CODE BEGIN Header_Localization */
 /**
- * @brief Function implementing the Localization Operation
+ * @brief Function implementing the Local_Task thread.
  * @param argument: Not used
  * @retval None
  */
@@ -723,19 +750,16 @@ void Localization(void *argument)
 	/* USER CODE END Localization */
 }
 
-/* USER CODE BEGIN Header_Algo_Check */
+/* USER CODE BEGIN Header_Check_Algorithm */
 /**
- * @brief Function implementing Algorithm Checking that Uses the Calculated Data For It's Operation
- * 			So We Wait Until Calculation of Average Distances is Finished
+ * @brief Function implementing the Check_Algo thread.
  * @param argument: Not used
  * @retval None
  */
-
-/* USER CODE END Header_Algo_Check */
-void Algo_Check(void *argument)
+/* USER CODE END Header_Check_Algorithm */
+void Check_Algorithm(void *argument)
 {
-	/* USER CODE BEGIN Algo_Check */
-
+	/* USER CODE BEGIN Check_Algorithm */
 	/* Infinite loop */
 	for(;;)
 	{
@@ -766,23 +790,24 @@ void Algo_Check(void *argument)
 			/* Do Nothing */
 		}
 	}
-	/* USER CODE END Algo_Check */
+	/* USER CODE END Check_Algorithm */
 }
 
-/* USER CODE BEGIN Header_BSW_Check */
+/* USER CODE BEGIN Header_BSW_Algorithm */
 /**
  * @brief Function implementing the BSW_Algo thread.
  * @param argument: Not used
  * @retval None
  */
-/* USER CODE END Header_BSW_Check */
-void BSW_Check(void *argument)
+/* USER CODE END Header_BSW_Algorithm */
+void BSW_Algorithm(void *argument)
 {
-	/* USER CODE BEGIN BSW_Check */
+	/* USER CODE BEGIN BSW_Algorithm */
 	bool Local_BSWLeft = false ;
 	bool Local_BSWRight= false ;
 	bool Local_BSWL_LastState = false ;
 	bool Local_BSWR_LastState = false ;
+
 	/* Infinite loop */
 	for(;;)
 	{
@@ -845,23 +870,24 @@ void BSW_Check(void *argument)
 
 
 	}
-	/* USER CODE END BSW_Check */
+	/* USER CODE END BSW_Algorithm */
 }
 
-/* USER CODE BEGIN Header_DPW_Check */
+/* USER CODE BEGIN Header_DPW_Algorithm */
 /**
  * @brief Function implementing the DPW_Algo thread.
  * @param argument: Not used
  * @retval None
  */
-/* USER CODE END Header_DPW_Check */
-void DPW_Check(void *argument)
+/* USER CODE END Header_DPW_Algorithm */
+void DPW_Algorithm(void *argument)
 {
-	/* USER CODE BEGIN DPW_Check */
+	/* USER CODE BEGIN DPW_Algorithm */
 	bool Local_DPWLeft = false ;
 	bool Local_DPWRight= false ;
 	bool Local_DPWL_LastState = false ;
 	bool Local_DPWR_LastState = false ;
+
 
 	/* Infinite loop */
 	for(;;)
@@ -924,20 +950,19 @@ void DPW_Check(void *argument)
 		}
 
 	}
-
-	/* USER CODE END DPW_Check */
+	/* USER CODE END DPW_Algorithm */
 }
 
-/* USER CODE BEGIN Header_WirelessReceive */
+/* USER CODE BEGIN Header_Wireless_Receiving */
 /**
- * @brief Function implementing the Receive thread.
+ * @brief Function implementing the Receiveing thread.
  * @param argument: Not used
  * @retval None
  */
-/* USER CODE END Header_WirelessReceive */
-void WirelessReceive(void *argument)
+/* USER CODE END Header_Wireless_Receiving */
+void Wireless_Receiving(void *argument)
 {
-	/* USER CODE BEGIN WirelessReceive */
+	/* USER CODE BEGIN Wireless_Receiving */
 	/* Infinite loop */
 	for(;;)
 	{
@@ -1029,19 +1054,19 @@ void WirelessReceive(void *argument)
 		}
 		osDelay(1);
 	}
-	/* USER CODE END WirelessReceive */
+	/* USER CODE END Wireless_Receiving */
 }
 
-/* USER CODE BEGIN Header_FCW_Task */
+/* USER CODE BEGIN Header_FCW_Algorithm */
 /**
- * @brief Function implementing the FCW thread.
+ * @brief Function implementing the FCW_Algo thread.
  * @param argument: Not used
  * @retval None
  */
-/* USER CODE END Header_FCW_Task */
-void FCW_Task(void *argument)
+/* USER CODE END Header_FCW_Algorithm */
+void FCW_Algorithm(void *argument)
 {
-	/* USER CODE BEGIN FCW_Task */
+	/* USER CODE BEGIN FCW_Algorithm */
 	/* Infinite loop */
 	for(;;)
 	{
@@ -1050,29 +1075,28 @@ void FCW_Task(void *argument)
 		/* Implement the Algorithm
 		 * */
 	}
-	/* USER CODE END FCW_Task */
+	/* USER CODE END FCW_Algorithm */
 }
 
-/* USER CODE BEGIN Header_EEBL_Task */
+/* USER CODE BEGIN Header_EEBL_Algorithm */
 /**
- * @brief Function implementing the EEBL thread.
+ * @brief Function implementing the EEBL_Algo thread.
  * @param argument: Not used
  * @retval None
  */
-/* USER CODE END Header_EEBL_Task */
-void EEBL_Task(void *argument)
+/* USER CODE END Header_EEBL_Algorithm */
+void EEBL_Algorithm(void *argument)
 {
-	/* USER CODE BEGIN EEBL_Task */
+	/* USER CODE BEGIN EEBL_Algorithm */
 	/* Infinite loop */
 	for(;;)
 	{
 		osEventFlagsWait(EventGroupHandle, EEBL_ASSERTED , osFlagsWaitAny , HAL_MAX_DELAY ) ;
 
-		/* Implement the Algorithm
-		 * */
-
+				/* Implement the Algorithm
+				 * */
 	}
-	/* USER CODE END EEBL_Task */
+	/* USER CODE END EEBL_Algorithm */
 }
 
 /**
