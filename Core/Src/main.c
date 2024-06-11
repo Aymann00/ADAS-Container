@@ -44,7 +44,22 @@ typedef enum
 	ALGO_CheckonCalc  = 0x04 , 	/**< ALGO_CheckonCalc 	*/
 
 }EventBits_t;
+/**
+ * @enum  : @EventBits_t
+ * @brief : Contains The Bits of the Event Group
+ * 		Each Bit is Specified to Carry out Some Operation When Set
+ *
+ */
+typedef enum
+{
+	FCW_ID=0x55,
+	DPW_R_ID=0x56,
+	DPW_L_ID=0x57,
+	BSW_R_ID=0x58,
+	BSW_L_ID=0x59,
+	EEBL_ID=0x60
 
+}Algo_message;
 
 typedef enum
 {
@@ -53,6 +68,10 @@ typedef enum
 	Algorithm_Cancel		= 2 ,
 }AlgorithmAsserted_t;
 
+typedef enum{
+	RPI_STOP = 0,
+	RPI_MOVE=1
+}Motors_State_t;
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -65,9 +84,10 @@ typedef enum
 #define CAR_ID							0x11	/* My Own Car ID */
 #define LOCALIZATION_OPERATION_ID		0x01	/* ID For Localization Operation */
 #define ASK_DIRECTION_OPERATION_ID      0x02	/* ID For Request Direction */
-#define Front_Threshold         		100		/* Front Distance Threshold */
+#define FCW_Threshold                   2000u     /*distances in mm this comes first*/
+#define EEBL_Threshold                  1000u     /*distances in mm this comes second*/
 #define TOTAL_ANGLES					360
-#define LOCALIZATION_TOLERANCE_VALUE	100
+#define LOCALIZATION_TOLERANCE_VALUE	500
 
 /*TODO : review angles & Thresholds for all algorithms*/
 #define BSW_Minimum_Angle_L				90
@@ -76,7 +96,7 @@ typedef enum
 #define BSW_Minimum_Angle_R				225
 #define BSW_Maximium_Angle_R			270
 
-#define BSW_Threshold					500
+#define BSW_Threshold					700
 
 /*TODO : review angles & Thresholds for all algorithms*/
 #define DPW_Minimum_Angle_L				15
@@ -85,7 +105,7 @@ typedef enum
 #define DPW_Minimum_Angle_R				315
 #define DPW_Maximium_Angle_R			345
 
-#define DPW_Threshold					500
+#define DPW_Threshold					2000u
 
 /* USER CODE END PM */
 
@@ -93,6 +113,7 @@ typedef enum
 SPI_HandleTypeDef hspi1;
 
 TIM_HandleTypeDef htim3;
+TIM_HandleTypeDef htim10;
 
 UART_HandleTypeDef huart1;
 DMA_HandleTypeDef hdma_usart1_rx;
@@ -210,6 +231,7 @@ static void MX_DMA_Init(void);
 static void MX_SPI1_Init(void);
 static void MX_TIM3_Init(void);
 static void MX_USART1_UART_Init(void);
+static void MX_TIM10_Init(void);
 void StartDefaultTask(void *argument);
 void Init_Task(void *argument);
 void Distance_Calc(void *argument);
@@ -240,6 +262,7 @@ char AckPayload_Buffer[32];
  */
 int main(void)
 {
+
 	/* USER CODE BEGIN 1 */
 
 	/* USER CODE END 1 */
@@ -266,6 +289,7 @@ int main(void)
 	MX_SPI1_Init();
 	MX_TIM3_Init();
 	MX_USART1_UART_Init();
+	MX_TIM10_Init();
 	/* USER CODE BEGIN 2 */
 
 	/* USER CODE END 2 */
@@ -338,6 +362,7 @@ int main(void)
 	osKernelStart();
 
 	/* We should never get here as control is now taken by the scheduler */
+
 	/* Infinite loop */
 	/* USER CODE BEGIN WHILE */
 	while (1)
@@ -475,6 +500,37 @@ static void MX_TIM3_Init(void)
 	/* USER CODE BEGIN TIM3_Init 2 */
 
 	/* USER CODE END TIM3_Init 2 */
+
+}
+
+/**
+ * @brief TIM10 Initialization Function
+ * @param None
+ * @retval None
+ */
+static void MX_TIM10_Init(void)
+{
+
+	/* USER CODE BEGIN TIM10_Init 0 */
+
+	/* USER CODE END TIM10_Init 0 */
+
+	/* USER CODE BEGIN TIM10_Init 1 */
+
+	/* USER CODE END TIM10_Init 1 */
+	htim10.Instance = TIM10;
+	htim10.Init.Prescaler = 144;
+	htim10.Init.CounterMode = TIM_COUNTERMODE_UP;
+	htim10.Init.Period = 50000;
+	htim10.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+	htim10.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+	if (HAL_TIM_Base_Init(&htim10) != HAL_OK)
+	{
+		Error_Handler();
+	}
+	/* USER CODE BEGIN TIM10_Init 2 */
+
+	/* USER CODE END TIM10_Init 2 */
 
 }
 
@@ -771,26 +827,19 @@ void Check_Algorithm(void *argument)
 		osEventFlagsWait( EventGroupHandle , ALGO_CheckonCalc , osFlagsWaitAny, HAL_MAX_DELAY ) ;
 
 		/* Checking on Front Threshold */
-		if(Obstcales_Detection[FRONT] <= Front_Threshold )
+		if( ( Obstcales_Detection[FRONT] <= FCW_Threshold ) && (!( Obstcales_Detection[FRONT] <= EEBL_Threshold )) )
 		{
-			/* Frame to Sent to the Front Car to Ask For It's Direction */
-			uint8_t ASK_Direction_Frame[3] ={CAR_ID,
-					ASK_DIRECTION_OPERATION_ID,Front_Car_ID};
-
-			/* Protecting Shared Resource -> NRF Module
-			 * */
-			osMutexAcquire(NRF_MutexHandle, HAL_MAX_DELAY) ;
-
-			NRF24_stopListening();
-			NRF24_write(ASK_Direction_Frame, 3) ;
-			NRF24_startListening();
-
-			osMutexRelease(NRF_MutexHandle);
-
+			//Invoke FCW algorithm
+			osEventFlagsSet( EventGroupHandle , FCW_ASSERTED ) ;
+		}
+		else if( Obstcales_Detection[FRONT] <= EEBL_Threshold )
+		{
+			//Invoke EEBL algorithm
+			osEventFlagsSet( EventGroupHandle , EEBL_ASSERTED ) ;
 		}
 		else
 		{
-			/* Do Nothing */
+			HAL_UART_Transmit(&huart1, (uint8_t*)RPI_MOVE, 1, HAL_MAX_DELAY ) ;
 		}
 	}
 	/* USER CODE END Check_Algorithm */
@@ -829,6 +878,7 @@ void BSW_Algorithm(void *argument)
 			{
 				/*break the loop and invoke BSW Left warning*/
 				Local_BSWLeft = true ;
+
 				break;
 			}
 		}
@@ -841,6 +891,7 @@ void BSW_Algorithm(void *argument)
 			{
 				/*break the loop and invoke BSW Left warning*/
 				Local_BSWRight = true;
+
 				break;
 			}
 		}
@@ -848,6 +899,7 @@ void BSW_Algorithm(void *argument)
 		if ( ( Local_BSWLeft == true ) && ( Local_BSWL_LastState != true ) )
 		{
 			/*Invoke the Algorithm*/
+
 		}
 		else if ( ( Local_BSWLeft == false ) && ( Local_BSWL_LastState == true ) )
 		{
@@ -909,7 +961,9 @@ void DPW_Algorithm(void *argument)
 			if ( ( 0 != Distances_Buffer[Angle_Iterator] ) && (Distances_Buffer[Angle_Iterator] <= DPW_Threshold))
 			{
 				/*break the loop and invoke DPW Left warning*/
+
 				Local_DPWLeft = true;
+
 				break;
 			}
 		}
@@ -920,7 +974,7 @@ void DPW_Algorithm(void *argument)
 		{
 			if ( ( 0 != Distances_Buffer[Angle_Iterator] ) && (Distances_Buffer[Angle_Iterator] <= DPW_Threshold) )
 			{
-				/*break the loop and invoke DPW Left warning*/
+				/*break the loop and invoke DPW Right warning*/
 				Local_DPWRight = true;
 				break;
 			}
@@ -942,6 +996,9 @@ void DPW_Algorithm(void *argument)
 		if ( ( Local_DPWRight == true ) && ( Local_DPWR_LastState != true ) )
 		{
 			/*Invoke the Algorithm*/
+			/*Send Message DPW to the rear car */
+			/* OLED Warning Front Vehicle Braking */
+
 		}
 		else if ( ( Local_DPWRight == false ) && ( Local_DPWR_LastState == true ) )
 		{
@@ -1014,52 +1071,9 @@ void Wireless_Receiving(void *argument)
 					 */
 				}
 				break;
-			case ASK_DIRECTION_OPERATION_ID :
-
-				bool TX_Flag =0;
-				bool RX_Flag =0;
-				bool TX_Fail = 0;
-				if(	(CAR_ID == Received_Data[2] && RX_Flag))
-				{
-					uint8_t ASK_Direction_Frame[4] ={0};
-
-					ASK_Direction_Frame[0] = CAR_ID ;
-					ASK_Direction_Frame[1] = ASK_DIRECTION_OPERATION_ID ;
-					ASK_Direction_Frame[2] = Front_Car_ID ;
-					ASK_Direction_Frame[3] = My_Direction ;
-
-					osMutexAcquire(NRF_MutexHandle, HAL_MAX_DELAY) ;
-					NRF24_stopListening();
-					NRF24_writeAckPayload(1, ASK_Direction_Frame, 4);
-					NRF24_startListening();
-					osMutexRelease(NRF_MutexHandle) ;
-
-				}
-				else if ((CAR_ID == Received_Data[2] && TX_Flag))
-				{
-					if (	Received_Data[3]==	My_Direction)
-					{
-						/*Fire EEBL*/
-						osEventFlagsSet(EventGroupHandle, EEBL_ASSERTED ) ;
-
-					}
-					else if(Received_Data[3]	!=	My_Direction)
-					{
-						/*Fire FCW*/
-						osEventFlagsSet(EventGroupHandle, FCW_ASSERTED ) ;
-					}
-					else
-					{
-						/*
-						 * Do Nothing
-						 */
-					}
-				}
-				else {
-					/*
-					 * Stop immediately
-					 */
-				}
+			case EEBL_ID :
+				/* OLED Warning Front Vehicle Braking */
+				break;
 			default:
 				break;
 			}
@@ -1087,7 +1101,8 @@ void FCW_Algorithm(void *argument)
 
 		/* Implement the Algorithm
 		 * */
-		/* TODO : Raspberry pi Receiving should be on more than one serial */
+		/* buzzer on as warning */
+
 	}
 	/* USER CODE END FCW_Algorithm */
 }
@@ -1109,6 +1124,20 @@ void EEBL_Algorithm(void *argument)
 
 		/* Implement the Algorithm
 		 * */
+		uint8_t MessageToWarnBackCar[]={CAR_ID,EEBL_ID,Back_Car_ID};
+		/* Send Message to the Raspberry Pi to Take Actions and Stop Motor */
+		HAL_UART_Transmit(&huart1, (uint8_t*)RPI_STOP, 1, HAL_MAX_DELAY ) ;
+
+		/* Send warning to the Backward Vehicle to check on Algorithm via NRF */
+		osMutexAcquire(NRF_MutexHandle, HAL_MAX_DELAY) ;
+
+		NRF24_stopListening();
+		NRF24_write( MessageToWarnBackCar , 3 ) ;
+		NRF24_startListening();
+
+		osMutexRelease(NRF_MutexHandle);
+		//sending to backward cars to process the case using NRF
+
 	}
 	/* USER CODE END EEBL_Algorithm */
 }
