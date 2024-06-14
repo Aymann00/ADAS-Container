@@ -26,10 +26,16 @@
 #include <stdbool.h>
 #include <string.h>
 #include "NRF.h"
+#include "../Inc/fonts.h"
+#include "../Inc/ssd1306.h"
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
+
+
+
 /**
  * @enum  : @EventBits_t
  * @brief : Contains The Bits of the Event Group
@@ -110,6 +116,8 @@ typedef enum{
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
+I2C_HandleTypeDef hi2c1;
+
 SPI_HandleTypeDef hspi1;
 
 TIM_HandleTypeDef htim3;
@@ -167,10 +175,10 @@ const osThreadAttr_t DPW_Algo_attributes = {
 		.stack_size = 128 * 4,
 		.priority = (osPriority_t) osPriorityBelowNormal,
 };
-/* Definitions for Receiveing */
-osThreadId_t ReceiveingHandle;
-const osThreadAttr_t Receiveing_attributes = {
-		.name = "Receiveing",
+/* Definitions for Receiving */
+osThreadId_t ReceivingHandle;
+const osThreadAttr_t Receiving_attributes = {
+		.name = "Receiving",
 		.stack_size = 128 * 4,
 		.priority = (osPriority_t) osPriorityLow,
 };
@@ -232,6 +240,7 @@ static void MX_SPI1_Init(void);
 static void MX_TIM3_Init(void);
 static void MX_USART1_UART_Init(void);
 static void MX_TIM10_Init(void);
+static void MX_I2C1_Init(void);
 void StartDefaultTask(void *argument);
 void Init_Task(void *argument);
 void Distance_Calc(void *argument);
@@ -290,6 +299,7 @@ int main(void)
 	MX_TIM3_Init();
 	MX_USART1_UART_Init();
 	MX_TIM10_Init();
+	MX_I2C1_Init();
 	/* USER CODE BEGIN 2 */
 
 	/* USER CODE END 2 */
@@ -318,7 +328,7 @@ int main(void)
 
 	/* Create the thread(s) */
 	/* creation of defaultTask */
-	defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
+	//defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
 
 	/* creation of Startup_Task */
 	Startup_TaskHandle = osThreadNew(Init_Task, NULL, &Startup_Task_attributes);
@@ -338,8 +348,8 @@ int main(void)
 	/* creation of DPW_Algo */
 	DPW_AlgoHandle = osThreadNew(DPW_Algorithm, NULL, &DPW_Algo_attributes);
 
-	/* creation of Receiveing */
-	ReceiveingHandle = osThreadNew(Wireless_Receiving, NULL, &Receiveing_attributes);
+	/* creation of Receiving */
+	ReceivingHandle = osThreadNew(Wireless_Receiving, NULL, &Receiving_attributes);
 
 	/* creation of FCW_Algo */
 	FCW_AlgoHandle = osThreadNew(FCW_Algorithm, NULL, &FCW_Algo_attributes);
@@ -417,6 +427,40 @@ void SystemClock_Config(void)
 	{
 		Error_Handler();
 	}
+}
+
+/**
+ * @brief I2C1 Initialization Function
+ * @param None
+ * @retval None
+ */
+static void MX_I2C1_Init(void)
+{
+
+	/* USER CODE BEGIN I2C1_Init 0 */
+
+	/* USER CODE END I2C1_Init 0 */
+
+	/* USER CODE BEGIN I2C1_Init 1 */
+
+	/* USER CODE END I2C1_Init 1 */
+	hi2c1.Instance = I2C1;
+	hi2c1.Init.ClockSpeed = 400000;
+	hi2c1.Init.DutyCycle = I2C_DUTYCYCLE_2;
+	hi2c1.Init.OwnAddress1 = 0;
+	hi2c1.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
+	hi2c1.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
+	hi2c1.Init.OwnAddress2 = 0;
+	hi2c1.Init.GeneralCallMode = I2C_GENERALCALL_DISABLE;
+	hi2c1.Init.NoStretchMode = I2C_NOSTRETCH_DISABLE;
+	if (HAL_I2C_Init(&hi2c1) != HAL_OK)
+	{
+		Error_Handler();
+	}
+	/* USER CODE BEGIN I2C1_Init 2 */
+
+	/* USER CODE END I2C1_Init 2 */
+
 }
 
 /**
@@ -597,6 +641,7 @@ static void MX_GPIO_Init(void)
 	/* GPIO Ports Clock Enable */
 	__HAL_RCC_GPIOH_CLK_ENABLE();
 	__HAL_RCC_GPIOA_CLK_ENABLE();
+	__HAL_RCC_GPIOB_CLK_ENABLE();
 
 	/*Configure GPIO pin Output Level */
 	HAL_GPIO_WritePin(GPIOA, NRF_CSN_PIN_Pin|NRF_CE_PIN_Pin, GPIO_PIN_RESET);
@@ -682,6 +727,82 @@ uint16_t * _CalcAvgDistance( uint16_t * Data_Arr )
 
 	return Local_AvgDistance;
 }
+
+void _vSSD1306_ForwardCollisionWarning(void)
+{
+	SSD1306_DrawRectangle(0, 0 , 128u ,  64u , SSD1306_COLOR_WHITE ) ;
+	SSD1306_GotoXY(64-60,4) ;
+	SSD1306_Puts("Forward Collision",&Font_7x10,SSD1306_COLOR_WHITE) ;
+	SSD1306_GotoXY(64-(25),15) ;
+	SSD1306_Puts("Warning",&Font_7x10,SSD1306_COLOR_WHITE) ;
+
+	SSD1306_DrawBitmap(64-18 , 26  , ForwardCollision_Bitmap , 35 , 35, SSD1306_COLOR_WHITE) ;
+}
+
+void _vSSD1306_BlindSpotWarning( BlindSpotDirection_t Copy_u8Direction )
+{
+	SSD1306_DrawRectangle(0, 0 , 128u ,  64u , SSD1306_COLOR_WHITE ) ;
+	SSD1306_GotoXY(64-(35),4) ;
+	SSD1306_Puts("Blind Spot",&Font_7x10,SSD1306_COLOR_WHITE) ;
+
+	if( Copy_u8Direction == BlindSpotDirection_Right )
+	{
+		SSD1306_GotoXY(64-(56),15) ;
+		SSD1306_Puts("Warning On Right",&Font_7x10,SSD1306_COLOR_WHITE) ;
+	}
+	else if( Copy_u8Direction == BlindSpotDirection_Left )
+	{
+		SSD1306_GotoXY(64-(53),15) ;
+		SSD1306_Puts("Warning On Left",&Font_7x10,SSD1306_COLOR_WHITE) ;
+	}
+	else
+	{
+		/* Do Nothing */
+	}
+	SSD1306_DrawBitmap(64-18 , 26  , BlindSpotWarning_Bitmap , 35 , 35, SSD1306_COLOR_WHITE) ;
+
+
+}
+
+void _vSSD1306_EmergencyElectronicBrake(void)
+{
+	SSD1306_DrawRectangle(0, 0 , 128u ,  64u , SSD1306_COLOR_WHITE ) ;
+	SSD1306_GotoXY(64-28,4) ;
+	SSD1306_Puts("Warning!",&Font_7x10,SSD1306_COLOR_WHITE) ;
+	SSD1306_GotoXY(64-46,15) ;
+	SSD1306_Puts("Front Vehicle",&Font_7x10,SSD1306_COLOR_WHITE) ;
+	SSD1306_GotoXY(64-42,26) ;
+	SSD1306_Puts("Hard Braking",&Font_7x10,SSD1306_COLOR_WHITE) ;
+
+	SSD1306_DrawBitmap(64-13 , 37  , EEBL_Bitmap , 25 , 25, SSD1306_COLOR_WHITE) ;
+
+
+}
+
+void _vSSD1306_DontPassWarning(DontPassWarningDirection_t Copy_u8Direction)
+{
+	SSD1306_DrawRectangle(0, 0 , 128u ,  64u , SSD1306_COLOR_WHITE ) ;
+	SSD1306_GotoXY(64-53,4) ;
+	SSD1306_Puts("Don't Pass From",&Font_7x10,SSD1306_COLOR_WHITE) ;
+
+	if( Copy_u8Direction == DontPassWarningDirection_Right )
+	{
+		SSD1306_GotoXY(64-18,15) ;
+		SSD1306_Puts("Right",&Font_7x10,SSD1306_COLOR_WHITE) ;
+	}
+	else if( Copy_u8Direction == DontPassWarningDirection_Left )
+	{
+		SSD1306_GotoXY(64-14,15) ;
+		SSD1306_Puts("Left",&Font_7x10,SSD1306_COLOR_WHITE) ;
+	}
+	else
+	{
+		/* Do Nothing */
+	}
+
+	SSD1306_DrawBitmap(64-18 , 26  , DontPassWarning_Bitmap , 35 , 35, SSD1306_COLOR_WHITE) ;
+
+}
 /* USER CODE END 4 */
 
 /* USER CODE BEGIN Header_StartDefaultTask */
@@ -691,16 +812,16 @@ uint16_t * _CalcAvgDistance( uint16_t * Data_Arr )
  * @retval None
  */
 /* USER CODE END Header_StartDefaultTask */
-void StartDefaultTask(void *argument)
-{
-	/* USER CODE BEGIN 5 */
-	/* Infinite loop */
-	for(;;)
-	{
-		osDelay(1);
-	}
-	/* USER CODE END 5 */
-}
+//void StartDefaultTask(void *argument)
+//{
+/* USER CODE BEGIN 5 */
+/* Infinite loop */
+// for(;;)
+// {
+//   osDelay(1);
+// }
+/* USER CODE END 5 */
+//}
 
 /* USER CODE BEGIN Header_Init_Task */
 /**
@@ -714,7 +835,9 @@ void Init_Task(void *argument)
 	/* USER CODE BEGIN Init_Task */
 	/* Initialize DMA with UART to Generate Interrupt When Receiving all 360 Angle Distances */
 	HAL_UART_Receive_DMA(&huart1, Distances_Buffer_str, (uint16_t)(TOTAL_ANGLES*5));
-	//NRF Module Initialization -> Less Then 0.5 Sec
+	/* Initializing SSD1306 ( OLED Display ) */
+	SSD1306_Init();
+	/* NRF Module Initialization -> Less Then 0.5 Sec */
 	/* Protecting Shared Resource -> NRF Module
 	 *  */
 	osMutexAcquire(NRF_MutexHandle, HAL_MAX_DELAY);
@@ -804,7 +927,7 @@ void Localization(void *argument)
 		osMutexRelease(NRF_MutexHandle);
 
 		/* TODO: Timing Should Be Considered */
-		osDelay(3000);
+		osDelay(2000);
 	}
 	/* USER CODE END Localization */
 }
@@ -899,11 +1022,14 @@ void BSW_Algorithm(void *argument)
 		if ( ( Local_BSWLeft == true ) && ( Local_BSWL_LastState != true ) )
 		{
 			/*Invoke the Algorithm*/
+			_vSSD1306_BlindSpotWarning(BlindSpotDirection_Left);
+			SSD1306_UpdateScreen();
 
 		}
 		else if ( ( Local_BSWLeft == false ) && ( Local_BSWL_LastState == true ) )
 		{
 			/*Abort the Algorithm*/
+			SSD1306_Clear();
 		}
 		else
 		{
@@ -913,10 +1039,13 @@ void BSW_Algorithm(void *argument)
 		if ( ( Local_BSWRight == true ) && ( Local_BSWR_LastState != true ) )
 		{
 			/*Invoke the Algorithm*/
+			_vSSD1306_BlindSpotWarning(BlindSpotDirection_Right);
+			SSD1306_UpdateScreen();
 		}
 		else if ( ( Local_BSWRight == false ) && ( Local_BSWR_LastState == true ) )
 		{
 			/*Abort the Algorithm*/
+			SSD1306_Clear();
 		}
 		else
 		{
@@ -953,6 +1082,8 @@ void DPW_Algorithm(void *argument)
 		/* Wait on DMA Interrupt On Receive to Come */
 		osEventFlagsWait( EventGroupHandle , DistanceCalcOnDMA , osFlagsWaitAny , HAL_MAX_DELAY ) ;
 
+		uint8_t MessageToWarnBackCar[]={CAR_ID, 0 , Back_Car_ID};
+
 		/*Check the Left Angles*/
 		for (uint8_t Angle_Iterator = DPW_Maximium_Angle_L ;
 				Angle_Iterator >= DPW_Minimum_Angle_L ;
@@ -983,6 +1114,15 @@ void DPW_Algorithm(void *argument)
 		if ( ( Local_DPWLeft == true ) && ( Local_DPWL_LastState != true ) )
 		{
 			/*Invoke the Algorithm*/
+			/* Send warning to the Backward Vehicle ( Don't Pass Warning ) via NRF */
+			MessageToWarnBackCar[1]=DPW_L_ID;
+			osMutexAcquire(NRF_MutexHandle, HAL_MAX_DELAY) ;
+
+			NRF24_stopListening();
+			NRF24_write( MessageToWarnBackCar , 3 ) ;
+			NRF24_startListening();
+
+			osMutexRelease(NRF_MutexHandle);
 		}
 		else if ( ( Local_DPWLeft == false ) && ( Local_DPWL_LastState == true ) )
 		{
@@ -996,8 +1136,15 @@ void DPW_Algorithm(void *argument)
 		if ( ( Local_DPWRight == true ) && ( Local_DPWR_LastState != true ) )
 		{
 			/*Invoke the Algorithm*/
-			/*Send Message DPW to the rear car */
-			/* OLED Warning Front Vehicle Braking */
+			/* Send warning to the Backward Vehicle ( Don't Pass Warning ) via NRF */
+			MessageToWarnBackCar[1]=DPW_R_ID;
+			osMutexAcquire(NRF_MutexHandle, HAL_MAX_DELAY) ;
+
+			NRF24_stopListening();
+			NRF24_write( MessageToWarnBackCar , 3 ) ;
+			NRF24_startListening();
+
+			osMutexRelease(NRF_MutexHandle);
 
 		}
 		else if ( ( Local_DPWRight == false ) && ( Local_DPWR_LastState == true ) )
@@ -1072,8 +1219,41 @@ void Wireless_Receiving(void *argument)
 				}
 				break;
 			case EEBL_ID :
-				/* OLED Warning Front Vehicle Braking */
+				/* This Message is For me & Came From the Front Car */
+				if( ( Received_Data[2] == CAR_ID ) && ( Received_Data[0] == Front_Car_ID ) )
+				{
+					/* OLED Warning Front Vehicle Hard Braking */
+					_vSSD1306_EmergencyElectronicBrake();
+					SSD1306_UpdateScreen();
+				}
+
 				break;
+			case DPW_L_ID :
+				/* This Message is For me & Came From the Front Car */
+				if( ( Received_Data[2] == CAR_ID ) && ( Received_Data[0] == Front_Car_ID ) )
+				{
+					_vSSD1306_DontPassWarning(DontPassWarningDirection_Left) ;
+					SSD1306_UpdateScreen() ;
+				}
+				else
+				{
+					/* Do Nothing */
+				}
+
+				break ;
+
+			case DPW_R_ID :
+				/* This Message is For me & Came From the Front Car */
+				if( ( Received_Data[2] == CAR_ID ) && ( Received_Data[0] == Front_Car_ID ) )
+				{
+					_vSSD1306_DontPassWarning(DontPassWarningDirection_Right) ;
+					SSD1306_UpdateScreen() ;
+				}
+				else
+				{
+					/* Do Nothing */
+				}
+				break ;
 			default:
 				break;
 			}
@@ -1102,6 +1282,8 @@ void FCW_Algorithm(void *argument)
 		/* Implement the Algorithm
 		 * */
 		/* buzzer on as warning */
+		_vSSD1306_ForwardCollisionWarning();
+		SSD1306_UpdateScreen() ;
 
 	}
 	/* USER CODE END FCW_Algorithm */

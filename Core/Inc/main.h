@@ -37,6 +37,22 @@ extern "C" {
 /* Exported types ------------------------------------------------------------*/
 /* USER CODE BEGIN ET */
 
+/**
+ * @enum : @BlindSpotDirection_t
+ */
+typedef enum{
+	BlindSpotDirection_Right = 0x77 ,/**< BlindSpotDirection_Right */
+	BlindSpotDirection_Left  = 0x88  /**< BlindSpotDirection_Left */
+}BlindSpotDirection_t;
+
+/**
+ * @enum : @DontPassWarningDirection_t
+ */
+typedef enum{
+	DontPassWarningDirection_Right = 0xAA,
+	DontPassWarningDirection_Left  = 0xBB
+}DontPassWarningDirection_t;
+
 /* USER CODE END ET */
 
 /* Exported constants --------------------------------------------------------*/
@@ -54,6 +70,43 @@ void Error_Handler(void);
 
 /* USER CODE BEGIN EFP */
 
+/**
+ * @fn 		: _vSSD1306_ForwardCollisionWarning(void)
+ * @brief   : For Forward Collision Warning Visualization on SSD1306
+ * @param   : void
+ * @note 	: After Calling This Function ,
+ * 			 The Function ( SSD1306_UpdateScreen ) Should Be Called To Update the Display
+ */
+void _vSSD1306_ForwardCollisionWarning(void) ;
+
+/**
+ * @fn  	: _vSSD1306_BlindSpotWarning(BlindSpotDirection_t)
+ * @brief 	: For Blind Spot Warning Visualization on SSD1306
+ * @param 	: Copy_u8Direction => Direction of BlindSpot Detected By Algorithm ,
+ * 								For Options Go To ( @BlindSpotDirection_t )
+ * @note 	: After Calling This Function ,
+ * 			 The Function ( SSD1306_UpdateScreen ) Should Be Called To Update the Display
+ */
+void _vSSD1306_BlindSpotWarning( BlindSpotDirection_t Copy_u8Direction ) ;
+
+/**
+ * @fn 		: _vSSD1306_EmergencyElectroniBrake(void)
+ * @brief	: For EEBL Visualization on SSD1306
+ * @param 	: void
+ * @note 	: After Calling This Function ,
+ * 			 The Function ( SSD1306_UpdateScreen ) Should Be Called To Update the Display
+ */
+void _vSSD1306_EmergencyElectronicBrake(void) ;
+
+/**
+ * @fn  	: _vSSD1306_DontPassWarning(DontPassWarningDirection_t)
+ * @brief 	: For Don't Pass Warning Visualization on SSD1306
+ * @param 	: Copy_u8Direction => Direction of Don't Pass Detected By Algorithm ,
+ * 								For Options Go To ( @DontPassWarningDirection_t )
+ * @note 	: After Calling This Function ,
+ * 			 The Function ( SSD1306_UpdateScreen ) Should Be Called To Update the Display
+ */
+void _vSSD1306_DontPassWarning(DontPassWarningDirection_t Copy_u8Direction) ;
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
