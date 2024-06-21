@@ -126,13 +126,7 @@ TIM_HandleTypeDef htim3;
 UART_HandleTypeDef huart1;
 DMA_HandleTypeDef hdma_usart1_rx;
 
-/* Definitions for defaultTask */
-osThreadId_t defaultTaskHandle;
-const osThreadAttr_t defaultTask_attributes = {
-  .name = "defaultTask",
-  .stack_size = 128 * 4,
-  .priority = (osPriority_t) osPriorityNormal,
-};
+
 /* Definitions for Startup_Task */
 osThreadId_t Startup_TaskHandle;
 const osThreadAttr_t Startup_Task_attributes = {
@@ -247,7 +241,6 @@ static void MX_SPI1_Init(void);
 static void MX_TIM3_Init(void);
 static void MX_USART1_UART_Init(void);
 static void MX_I2C1_Init(void);
-void StartDefaultTask(void *argument);
 void Init_Task(void *argument);
 void Distance_Calc(void *argument);
 void Localization(void *argument);
@@ -335,7 +328,6 @@ int main(void)
 
   /* Create the thread(s) */
   /* creation of defaultTask */
-  defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
 
   /* creation of Startup_Task */
   Startup_TaskHandle = osThreadNew(Init_Task, NULL, &Startup_Task_attributes);
@@ -794,22 +786,6 @@ void _vSSD1306_DontPassWarning(DontPassWarningDirection_t Copy_u8Direction)
 /* USER CODE END 4 */
 
 /* USER CODE BEGIN Header_StartDefaultTask */
-/**
- * @brief  Function implementing the defaultTask thread.
- * @param  argument: Not used
- * @retval None
- */
-/* USER CODE END Header_StartDefaultTask */
-void StartDefaultTask(void *argument)
-{
-  /* USER CODE BEGIN 5 */
-	/* Infinite loop */
-	// for(;;)
-	// {
-	//   osDelay(1);
-	// }
-  /* USER CODE END 5 */
-}
 
 /* USER CODE BEGIN Header_Init_Task */
 /**
@@ -914,7 +890,7 @@ void Localization(void *argument)
 		osMutexRelease(NRF_MutexHandle);
 
 		/* TODO: Timing Should Be Considered */
-		osDelay(2000);
+		osDelay(1500);
 	}
   /* USER CODE END Localization */
 }
@@ -929,6 +905,7 @@ void Localization(void *argument)
 void Check_Algorithm(void *argument)
 {
   /* USER CODE BEGIN Check_Algorithm */
+	uint8_t Local_u8SendToRaspiContMov = RPI_MOVE ;
 	/* Infinite loop */
 	for(;;)
 	{
@@ -949,7 +926,7 @@ void Check_Algorithm(void *argument)
 		}
 		else
 		{
-			HAL_UART_Transmit(&huart1, (uint8_t*)RPI_MOVE, 1, HAL_MAX_DELAY ) ;
+			HAL_UART_Transmit(&huart1, &Local_u8SendToRaspiContMov, 1, HAL_MAX_DELAY ) ;
 		}
 	}
   /* USER CODE END Check_Algorithm */
@@ -974,7 +951,7 @@ void BSW_Algorithm(void *argument)
 	for(;;)
 	{
 		/* Wait on DMA Interrupt On Receive to Come */
-		osEventFlagsWait( EventGroupHandle , DistanceCalcOnDMA , osFlagsWaitAny , HAL_MAX_DELAY ) ;
+		osEventFlagsWait( EventGroupHandle , ALGO_CheckonCalc , osFlagsWaitAny , HAL_MAX_DELAY ) ;
 
 		Local_BSWL_LastState = Local_BSWLeft  ;
 		Local_BSWR_LastState = Local_BSWRight ;
@@ -1067,7 +1044,7 @@ void DPW_Algorithm(void *argument)
 		Local_DPWR_LastState = Local_DPWRight;
 
 		/* Wait on DMA Interrupt On Receive to Come */
-		osEventFlagsWait( EventGroupHandle , DistanceCalcOnDMA , osFlagsWaitAny , HAL_MAX_DELAY ) ;
+		osEventFlagsWait( EventGroupHandle , ALGO_CheckonCalc , osFlagsWaitAny , HAL_MAX_DELAY ) ;
 
 		uint8_t MessageToWarnBackCar[]={CAR_ID, 0 , Back_Car_ID};
 
@@ -1286,6 +1263,7 @@ void FCW_Algorithm(void *argument)
 void EEBL_Algorithm(void *argument)
 {
   /* USER CODE BEGIN EEBL_Algorithm */
+	uint8_t Local_u8SendToRaspiStopNow = RPI_STOP ;
 	/* Infinite loop */
 	for(;;)
 	{
@@ -1295,7 +1273,7 @@ void EEBL_Algorithm(void *argument)
 		 * */
 		uint8_t MessageToWarnBackCar[]={CAR_ID,EEBL_ID,Back_Car_ID};
 		/* Send Message to the Raspberry Pi to Take Actions and Stop Motor */
-		HAL_UART_Transmit(&huart1, (uint8_t*)RPI_STOP, 1, HAL_MAX_DELAY ) ;
+		HAL_UART_Transmit(&huart1, &Local_u8SendToRaspiStopNow, 1, HAL_MAX_DELAY ) ;
 
 		/* Send warning to the Backward Vehicle to check on Algorithm via NRF */
 		osMutexAcquire(NRF_MutexHandle, HAL_MAX_DELAY) ;
@@ -1321,10 +1299,11 @@ void EEBL_Algorithm(void *argument)
 void Ask_LidarData(void *argument)
 {
   /* USER CODE BEGIN Ask_LidarData */
+	uint8_t  Local_u8AskLidarForData = ASK_DATA ;
 	/* Infinite loop */
 	for(;;)
 	{
-		HAL_UART_Transmit(&huart1, (uint8_t*)ASK_DATA, 1, HAL_MAX_DELAY ) ;
+		HAL_UART_Transmit(&huart1, &Local_u8AskLidarForData, 1, HAL_MAX_DELAY ) ;
 
 		osDelay(1000);
 	}
