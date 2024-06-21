@@ -63,7 +63,8 @@ typedef enum
 	DPW_L_ID=0x57,
 	BSW_R_ID=0x58,
 	BSW_L_ID=0x59,
-	EEBL_ID=0x60
+	EEBL_ID=0x60,
+	ASK_DATA=0xf1
 
 }Algo_message;
 
@@ -121,7 +122,6 @@ I2C_HandleTypeDef hi2c1;
 SPI_HandleTypeDef hspi1;
 
 TIM_HandleTypeDef htim3;
-TIM_HandleTypeDef htim10;
 
 UART_HandleTypeDef huart1;
 DMA_HandleTypeDef hdma_usart1_rx;
@@ -129,82 +129,89 @@ DMA_HandleTypeDef hdma_usart1_rx;
 /* Definitions for defaultTask */
 osThreadId_t defaultTaskHandle;
 const osThreadAttr_t defaultTask_attributes = {
-		.name = "defaultTask",
-		.stack_size = 128 * 4,
-		.priority = (osPriority_t) osPriorityNormal,
+  .name = "defaultTask",
+  .stack_size = 128 * 4,
+  .priority = (osPriority_t) osPriorityNormal,
 };
 /* Definitions for Startup_Task */
 osThreadId_t Startup_TaskHandle;
 const osThreadAttr_t Startup_Task_attributes = {
-		.name = "Startup_Task",
-		.stack_size = 128 * 4,
-		.priority = (osPriority_t) osPriorityRealtime,
+  .name = "Startup_Task",
+  .stack_size = 128 * 4,
+  .priority = (osPriority_t) osPriorityRealtime,
 };
 /* Definitions for Calc_Dis */
 osThreadId_t Calc_DisHandle;
 const osThreadAttr_t Calc_Dis_attributes = {
-		.name = "Calc_Dis",
-		.stack_size = 128 * 4,
-		.priority = (osPriority_t) osPriorityAboveNormal,
+  .name = "Calc_Dis",
+  .stack_size = 128 * 4,
+  .priority = (osPriority_t) osPriorityAboveNormal,
 };
 /* Definitions for Local_Task */
 osThreadId_t Local_TaskHandle;
 const osThreadAttr_t Local_Task_attributes = {
-		.name = "Local_Task",
-		.stack_size = 128 * 4,
-		.priority = (osPriority_t) osPriorityNormal,
+  .name = "Local_Task",
+  .stack_size = 128 * 4,
+  .priority = (osPriority_t) osPriorityNormal,
 };
 /* Definitions for Check_Algo */
 osThreadId_t Check_AlgoHandle;
 const osThreadAttr_t Check_Algo_attributes = {
-		.name = "Check_Algo",
-		.stack_size = 128 * 4,
-		.priority = (osPriority_t) osPriorityAboveNormal,
+  .name = "Check_Algo",
+  .stack_size = 128 * 4,
+  .priority = (osPriority_t) osPriorityAboveNormal,
 };
 /* Definitions for BSW_Algo */
 osThreadId_t BSW_AlgoHandle;
 const osThreadAttr_t BSW_Algo_attributes = {
-		.name = "BSW_Algo",
-		.stack_size = 128 * 4,
-		.priority = (osPriority_t) osPriorityBelowNormal,
+  .name = "BSW_Algo",
+  .stack_size = 128 * 4,
+  .priority = (osPriority_t) osPriorityBelowNormal,
 };
 /* Definitions for DPW_Algo */
 osThreadId_t DPW_AlgoHandle;
 const osThreadAttr_t DPW_Algo_attributes = {
-		.name = "DPW_Algo",
-		.stack_size = 128 * 4,
-		.priority = (osPriority_t) osPriorityBelowNormal,
+  .name = "DPW_Algo",
+  .stack_size = 128 * 4,
+  .priority = (osPriority_t) osPriorityBelowNormal,
 };
-/* Definitions for Receiving */
-osThreadId_t ReceivingHandle;
-const osThreadAttr_t Receiving_attributes = {
-		.name = "Receiving",
-		.stack_size = 128 * 4,
-		.priority = (osPriority_t) osPriorityLow,
+/* Definitions for Receiveing */
+osThreadId_t ReceiveingHandle;
+const osThreadAttr_t Receiveing_attributes = {
+  .name = "Receiveing",
+  .stack_size = 128 * 4,
+  .priority = (osPriority_t) osPriorityLow,
 };
 /* Definitions for FCW_Algo */
 osThreadId_t FCW_AlgoHandle;
 const osThreadAttr_t FCW_Algo_attributes = {
-		.name = "FCW_Algo",
-		.stack_size = 128 * 4,
-		.priority = (osPriority_t) osPriorityNormal,
+  .name = "FCW_Algo",
+  .stack_size = 128 * 4,
+  .priority = (osPriority_t) osPriorityNormal,
 };
 /* Definitions for EEBL_Algo */
 osThreadId_t EEBL_AlgoHandle;
 const osThreadAttr_t EEBL_Algo_attributes = {
-		.name = "EEBL_Algo",
-		.stack_size = 128 * 4,
-		.priority = (osPriority_t) osPriorityLow,
+  .name = "EEBL_Algo",
+  .stack_size = 128 * 4,
+  .priority = (osPriority_t) osPriorityLow,
+};
+/* Definitions for Task_LidarData */
+osThreadId_t Task_LidarDataHandle;
+const osThreadAttr_t Task_LidarData_attributes = {
+  .name = "Task_LidarData",
+  .stack_size = 128 * 4,
+  .priority = (osPriority_t) osPriorityLow,
 };
 /* Definitions for NRF_Mutex */
 osMutexId_t NRF_MutexHandle;
 const osMutexAttr_t NRF_Mutex_attributes = {
-		.name = "NRF_Mutex"
+  .name = "NRF_Mutex"
 };
 /* Definitions for EventGroup */
 osEventFlagsId_t EventGroupHandle;
 const osEventFlagsAttr_t EventGroup_attributes = {
-		.name = "EventGroup"
+  .name = "EventGroup"
 };
 /* USER CODE BEGIN PV */
 /* Distances Sent From Lidar of the 360 Degrees */
@@ -239,7 +246,6 @@ static void MX_DMA_Init(void);
 static void MX_SPI1_Init(void);
 static void MX_TIM3_Init(void);
 static void MX_USART1_UART_Init(void);
-static void MX_TIM10_Init(void);
 static void MX_I2C1_Init(void);
 void StartDefaultTask(void *argument);
 void Init_Task(void *argument);
@@ -251,6 +257,7 @@ void DPW_Algorithm(void *argument);
 void Wireless_Receiving(void *argument);
 void FCW_Algorithm(void *argument);
 void EEBL_Algorithm(void *argument);
+void Ask_LidarData(void *argument);
 
 /* USER CODE BEGIN PFP */
 
@@ -266,406 +273,377 @@ char AckPayload_Buffer[32];
 /* USER CODE END 0 */
 
 /**
- * @brief  The application entry point.
- * @retval int
- */
+  * @brief  The application entry point.
+  * @retval int
+  */
 int main(void)
 {
 
-	/* USER CODE BEGIN 1 */
+  /* USER CODE BEGIN 1 */
 
-	/* USER CODE END 1 */
+  /* USER CODE END 1 */
 
-	/* MCU Configuration--------------------------------------------------------*/
+  /* MCU Configuration--------------------------------------------------------*/
 
-	/* Reset of all peripherals, Initializes the Flash interface and the Systick. */
-	HAL_Init();
+  /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
+  HAL_Init();
 
-	/* USER CODE BEGIN Init */
+  /* USER CODE BEGIN Init */
 
-	/* USER CODE END Init */
+  /* USER CODE END Init */
 
-	/* Configure the system clock */
-	SystemClock_Config();
+  /* Configure the system clock */
+  SystemClock_Config();
 
-	/* USER CODE BEGIN SysInit */
+  /* USER CODE BEGIN SysInit */
 
-	/* USER CODE END SysInit */
+  /* USER CODE END SysInit */
 
-	/* Initialize all configured peripherals */
-	MX_GPIO_Init();
-	MX_DMA_Init();
-	MX_SPI1_Init();
-	MX_TIM3_Init();
-	MX_USART1_UART_Init();
-	MX_TIM10_Init();
-	MX_I2C1_Init();
-	/* USER CODE BEGIN 2 */
+  /* Initialize all configured peripherals */
+  MX_GPIO_Init();
+  MX_DMA_Init();
+  MX_SPI1_Init();
+  MX_TIM3_Init();
+  MX_USART1_UART_Init();
+  MX_I2C1_Init();
+  /* USER CODE BEGIN 2 */
 	/* Initialize DMA with UART to Generate Interrupt When Receiving all 360 Angle Distances */
 	HAL_UART_Receive_DMA(&huart1, Distances_Buffer_str, (uint16_t)(TOTAL_ANGLES*5));
-	/* USER CODE END 2 */
+  /* USER CODE END 2 */
 
-	/* Init scheduler */
-	osKernelInitialize();
-	/* Create the mutex(es) */
-	/* creation of NRF_Mutex */
-	NRF_MutexHandle = osMutexNew(&NRF_Mutex_attributes);
+  /* Init scheduler */
+  osKernelInitialize();
+  /* Create the mutex(es) */
+  /* creation of NRF_Mutex */
+  NRF_MutexHandle = osMutexNew(&NRF_Mutex_attributes);
 
-	/* USER CODE BEGIN RTOS_MUTEX */
+  /* USER CODE BEGIN RTOS_MUTEX */
 	/* add mutexes, ... */
-	/* USER CODE END RTOS_MUTEX */
+  /* USER CODE END RTOS_MUTEX */
 
-	/* USER CODE BEGIN RTOS_SEMAPHORES */
+  /* USER CODE BEGIN RTOS_SEMAPHORES */
 	/* add semaphores, ... */
-	/* USER CODE END RTOS_SEMAPHORES */
+  /* USER CODE END RTOS_SEMAPHORES */
 
-	/* USER CODE BEGIN RTOS_TIMERS */
+  /* USER CODE BEGIN RTOS_TIMERS */
 	/* start timers, add new ones, ... */
-	/* USER CODE END RTOS_TIMERS */
+  /* USER CODE END RTOS_TIMERS */
 
-	/* USER CODE BEGIN RTOS_QUEUES */
+  /* USER CODE BEGIN RTOS_QUEUES */
 	/* add queues, ... */
-	/* USER CODE END RTOS_QUEUES */
+  /* USER CODE END RTOS_QUEUES */
 
-	/* Create the thread(s) */
-	/* creation of defaultTask */
-	//defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
+  /* Create the thread(s) */
+  /* creation of defaultTask */
+  defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
 
-	/* creation of Startup_Task */
-	Startup_TaskHandle = osThreadNew(Init_Task, NULL, &Startup_Task_attributes);
+  /* creation of Startup_Task */
+  Startup_TaskHandle = osThreadNew(Init_Task, NULL, &Startup_Task_attributes);
 
-	/* creation of Calc_Dis */
-	Calc_DisHandle = osThreadNew(Distance_Calc, NULL, &Calc_Dis_attributes);
+  /* creation of Calc_Dis */
+  Calc_DisHandle = osThreadNew(Distance_Calc, NULL, &Calc_Dis_attributes);
 
-	/* creation of Local_Task */
-	Local_TaskHandle = osThreadNew(Localization, NULL, &Local_Task_attributes);
+  /* creation of Local_Task */
+  Local_TaskHandle = osThreadNew(Localization, NULL, &Local_Task_attributes);
 
-	/* creation of Check_Algo */
-	Check_AlgoHandle = osThreadNew(Check_Algorithm, NULL, &Check_Algo_attributes);
+  /* creation of Check_Algo */
+  Check_AlgoHandle = osThreadNew(Check_Algorithm, NULL, &Check_Algo_attributes);
 
-	/* creation of BSW_Algo */
-	BSW_AlgoHandle = osThreadNew(BSW_Algorithm, NULL, &BSW_Algo_attributes);
+  /* creation of BSW_Algo */
+  BSW_AlgoHandle = osThreadNew(BSW_Algorithm, NULL, &BSW_Algo_attributes);
 
-	/* creation of DPW_Algo */
-	DPW_AlgoHandle = osThreadNew(DPW_Algorithm, NULL, &DPW_Algo_attributes);
+  /* creation of DPW_Algo */
+  DPW_AlgoHandle = osThreadNew(DPW_Algorithm, NULL, &DPW_Algo_attributes);
 
-	/* creation of Receiving */
-	ReceivingHandle = osThreadNew(Wireless_Receiving, NULL, &Receiving_attributes);
+  /* creation of Receiveing */
+  ReceiveingHandle = osThreadNew(Wireless_Receiving, NULL, &Receiveing_attributes);
 
-	/* creation of FCW_Algo */
-	FCW_AlgoHandle = osThreadNew(FCW_Algorithm, NULL, &FCW_Algo_attributes);
+  /* creation of FCW_Algo */
+  FCW_AlgoHandle = osThreadNew(FCW_Algorithm, NULL, &FCW_Algo_attributes);
 
-	/* creation of EEBL_Algo */
-	EEBL_AlgoHandle = osThreadNew(EEBL_Algorithm, NULL, &EEBL_Algo_attributes);
+  /* creation of EEBL_Algo */
+  EEBL_AlgoHandle = osThreadNew(EEBL_Algorithm, NULL, &EEBL_Algo_attributes);
 
-	/* USER CODE BEGIN RTOS_THREADS */
+  /* creation of Task_LidarData */
+  Task_LidarDataHandle = osThreadNew(Ask_LidarData, NULL, &Task_LidarData_attributes);
+
+  /* USER CODE BEGIN RTOS_THREADS */
 	/* add threads, ... */
-	/* USER CODE END RTOS_THREADS */
+  /* USER CODE END RTOS_THREADS */
 
-	/* creation of EventGroup */
-	EventGroupHandle = osEventFlagsNew(&EventGroup_attributes);
+  /* creation of EventGroup */
+  EventGroupHandle = osEventFlagsNew(&EventGroup_attributes);
 
-	/* USER CODE BEGIN RTOS_EVENTS */
+  /* USER CODE BEGIN RTOS_EVENTS */
 	/* add events, ... */
-	/* USER CODE END RTOS_EVENTS */
+  /* USER CODE END RTOS_EVENTS */
 
-	/* Start scheduler */
-	osKernelStart();
+  /* Start scheduler */
+  osKernelStart();
 
-	/* We should never get here as control is now taken by the scheduler */
+  /* We should never get here as control is now taken by the scheduler */
 
-	/* Infinite loop */
-	/* USER CODE BEGIN WHILE */
+  /* Infinite loop */
+  /* USER CODE BEGIN WHILE */
 	while (1)
 	{
-		/* USER CODE END WHILE */
+    /* USER CODE END WHILE */
 
-		/* USER CODE BEGIN 3 */
+    /* USER CODE BEGIN 3 */
 	}
-	/* USER CODE END 3 */
+  /* USER CODE END 3 */
 }
 
 /**
- * @brief System Clock Configuration
- * @retval None
- */
+  * @brief System Clock Configuration
+  * @retval None
+  */
 void SystemClock_Config(void)
 {
-	RCC_OscInitTypeDef RCC_OscInitStruct = {0};
-	RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
+  RCC_OscInitTypeDef RCC_OscInitStruct = {0};
+  RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
 
-	/** Configure the main internal regulator output voltage
-	 */
-	__HAL_RCC_PWR_CLK_ENABLE();
-	__HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
+  /** Configure the main internal regulator output voltage
+  */
+  __HAL_RCC_PWR_CLK_ENABLE();
+  __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
 
-	/** Initializes the RCC Oscillators according to the specified parameters
-	 * in the RCC_OscInitTypeDef structure.
-	 */
-	RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
-	RCC_OscInitStruct.HSEState = RCC_HSE_ON;
-	RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
-	RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
-	RCC_OscInitStruct.PLL.PLLM = 25;
-	RCC_OscInitStruct.PLL.PLLN = 144;
-	RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
-	RCC_OscInitStruct.PLL.PLLQ = 4;
-	if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
-	{
-		Error_Handler();
-	}
+  /** Initializes the RCC Oscillators according to the specified parameters
+  * in the RCC_OscInitTypeDef structure.
+  */
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
+  RCC_OscInitStruct.HSEState = RCC_HSE_ON;
+  RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
+  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
+  RCC_OscInitStruct.PLL.PLLM = 25;
+  RCC_OscInitStruct.PLL.PLLN = 144;
+  RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
+  RCC_OscInitStruct.PLL.PLLQ = 4;
+  if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
+  {
+    Error_Handler();
+  }
 
-	/** Initializes the CPU, AHB and APB buses clocks
-	 */
-	RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
-			|RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
-	RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
-	RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
-	RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV2;
-	RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
+  /** Initializes the CPU, AHB and APB buses clocks
+  */
+  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
+                              |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
+  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
+  RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
+  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV2;
+  RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
 
-	if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2) != HAL_OK)
-	{
-		Error_Handler();
-	}
+  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2) != HAL_OK)
+  {
+    Error_Handler();
+  }
 }
 
 /**
- * @brief I2C1 Initialization Function
- * @param None
- * @retval None
- */
+  * @brief I2C1 Initialization Function
+  * @param None
+  * @retval None
+  */
 static void MX_I2C1_Init(void)
 {
 
-	/* USER CODE BEGIN I2C1_Init 0 */
+  /* USER CODE BEGIN I2C1_Init 0 */
 
-	/* USER CODE END I2C1_Init 0 */
+  /* USER CODE END I2C1_Init 0 */
 
-	/* USER CODE BEGIN I2C1_Init 1 */
+  /* USER CODE BEGIN I2C1_Init 1 */
 
-	/* USER CODE END I2C1_Init 1 */
-	hi2c1.Instance = I2C1;
-	hi2c1.Init.ClockSpeed = 400000;
-	hi2c1.Init.DutyCycle = I2C_DUTYCYCLE_2;
-	hi2c1.Init.OwnAddress1 = 0;
-	hi2c1.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
-	hi2c1.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
-	hi2c1.Init.OwnAddress2 = 0;
-	hi2c1.Init.GeneralCallMode = I2C_GENERALCALL_DISABLE;
-	hi2c1.Init.NoStretchMode = I2C_NOSTRETCH_DISABLE;
-	if (HAL_I2C_Init(&hi2c1) != HAL_OK)
-	{
-		Error_Handler();
-	}
-	/* USER CODE BEGIN I2C1_Init 2 */
+  /* USER CODE END I2C1_Init 1 */
+  hi2c1.Instance = I2C1;
+  hi2c1.Init.ClockSpeed = 400000;
+  hi2c1.Init.DutyCycle = I2C_DUTYCYCLE_2;
+  hi2c1.Init.OwnAddress1 = 0;
+  hi2c1.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
+  hi2c1.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
+  hi2c1.Init.OwnAddress2 = 0;
+  hi2c1.Init.GeneralCallMode = I2C_GENERALCALL_DISABLE;
+  hi2c1.Init.NoStretchMode = I2C_NOSTRETCH_DISABLE;
+  if (HAL_I2C_Init(&hi2c1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN I2C1_Init 2 */
 
-	/* USER CODE END I2C1_Init 2 */
+  /* USER CODE END I2C1_Init 2 */
 
 }
 
 /**
- * @brief SPI1 Initialization Function
- * @param None
- * @retval None
- */
+  * @brief SPI1 Initialization Function
+  * @param None
+  * @retval None
+  */
 static void MX_SPI1_Init(void)
 {
 
-	/* USER CODE BEGIN SPI1_Init 0 */
+  /* USER CODE BEGIN SPI1_Init 0 */
 
-	/* USER CODE END SPI1_Init 0 */
+  /* USER CODE END SPI1_Init 0 */
 
-	/* USER CODE BEGIN SPI1_Init 1 */
+  /* USER CODE BEGIN SPI1_Init 1 */
 
-	/* USER CODE END SPI1_Init 1 */
-	/* SPI1 parameter configuration*/
-	hspi1.Instance = SPI1;
-	hspi1.Init.Mode = SPI_MODE_MASTER;
-	hspi1.Init.Direction = SPI_DIRECTION_2LINES;
-	hspi1.Init.DataSize = SPI_DATASIZE_8BIT;
-	hspi1.Init.CLKPolarity = SPI_POLARITY_LOW;
-	hspi1.Init.CLKPhase = SPI_PHASE_1EDGE;
-	hspi1.Init.NSS = SPI_NSS_SOFT;
-	hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_32;
-	hspi1.Init.FirstBit = SPI_FIRSTBIT_MSB;
-	hspi1.Init.TIMode = SPI_TIMODE_DISABLE;
-	hspi1.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
-	hspi1.Init.CRCPolynomial = 10;
-	if (HAL_SPI_Init(&hspi1) != HAL_OK)
-	{
-		Error_Handler();
-	}
-	/* USER CODE BEGIN SPI1_Init 2 */
+  /* USER CODE END SPI1_Init 1 */
+  /* SPI1 parameter configuration*/
+  hspi1.Instance = SPI1;
+  hspi1.Init.Mode = SPI_MODE_MASTER;
+  hspi1.Init.Direction = SPI_DIRECTION_2LINES;
+  hspi1.Init.DataSize = SPI_DATASIZE_8BIT;
+  hspi1.Init.CLKPolarity = SPI_POLARITY_LOW;
+  hspi1.Init.CLKPhase = SPI_PHASE_1EDGE;
+  hspi1.Init.NSS = SPI_NSS_SOFT;
+  hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_32;
+  hspi1.Init.FirstBit = SPI_FIRSTBIT_MSB;
+  hspi1.Init.TIMode = SPI_TIMODE_DISABLE;
+  hspi1.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
+  hspi1.Init.CRCPolynomial = 10;
+  if (HAL_SPI_Init(&hspi1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN SPI1_Init 2 */
 
-	/* USER CODE END SPI1_Init 2 */
+  /* USER CODE END SPI1_Init 2 */
 
 }
 
 /**
- * @brief TIM3 Initialization Function
- * @param None
- * @retval None
- */
+  * @brief TIM3 Initialization Function
+  * @param None
+  * @retval None
+  */
 static void MX_TIM3_Init(void)
 {
 
-	/* USER CODE BEGIN TIM3_Init 0 */
+  /* USER CODE BEGIN TIM3_Init 0 */
 
-	/* USER CODE END TIM3_Init 0 */
+  /* USER CODE END TIM3_Init 0 */
 
-	TIM_SlaveConfigTypeDef sSlaveConfig = {0};
-	TIM_MasterConfigTypeDef sMasterConfig = {0};
+  TIM_SlaveConfigTypeDef sSlaveConfig = {0};
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
 
-	/* USER CODE BEGIN TIM3_Init 1 */
+  /* USER CODE BEGIN TIM3_Init 1 */
 
-	/* USER CODE END TIM3_Init 1 */
-	htim3.Instance = TIM3;
-	htim3.Init.Prescaler = 0;
-	htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
-	htim3.Init.Period = 65535;
-	htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
-	htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
-	if (HAL_TIM_Base_Init(&htim3) != HAL_OK)
-	{
-		Error_Handler();
-	}
-	sSlaveConfig.SlaveMode = TIM_SLAVEMODE_DISABLE;
-	sSlaveConfig.InputTrigger = TIM_TS_ITR0;
-	if (HAL_TIM_SlaveConfigSynchro(&htim3, &sSlaveConfig) != HAL_OK)
-	{
-		Error_Handler();
-	}
-	sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
-	sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
-	if (HAL_TIMEx_MasterConfigSynchronization(&htim3, &sMasterConfig) != HAL_OK)
-	{
-		Error_Handler();
-	}
-	/* USER CODE BEGIN TIM3_Init 2 */
+  /* USER CODE END TIM3_Init 1 */
+  htim3.Instance = TIM3;
+  htim3.Init.Prescaler = 0;
+  htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim3.Init.Period = 65535;
+  htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim3) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sSlaveConfig.SlaveMode = TIM_SLAVEMODE_DISABLE;
+  sSlaveConfig.InputTrigger = TIM_TS_ITR0;
+  if (HAL_TIM_SlaveConfigSynchro(&htim3, &sSlaveConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim3, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM3_Init 2 */
 
-	/* USER CODE END TIM3_Init 2 */
-
-}
-
-/**
- * @brief TIM10 Initialization Function
- * @param None
- * @retval None
- */
-static void MX_TIM10_Init(void)
-{
-
-	/* USER CODE BEGIN TIM10_Init 0 */
-
-	/* USER CODE END TIM10_Init 0 */
-
-	/* USER CODE BEGIN TIM10_Init 1 */
-
-	/* USER CODE END TIM10_Init 1 */
-	htim10.Instance = TIM10;
-	htim10.Init.Prescaler = 144;
-	htim10.Init.CounterMode = TIM_COUNTERMODE_UP;
-	htim10.Init.Period = 50000;
-	htim10.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
-	htim10.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
-	if (HAL_TIM_Base_Init(&htim10) != HAL_OK)
-	{
-		Error_Handler();
-	}
-	/* USER CODE BEGIN TIM10_Init 2 */
-
-	/* USER CODE END TIM10_Init 2 */
+  /* USER CODE END TIM3_Init 2 */
 
 }
 
 /**
- * @brief USART1 Initialization Function
- * @param None
- * @retval None
- */
+  * @brief USART1 Initialization Function
+  * @param None
+  * @retval None
+  */
 static void MX_USART1_UART_Init(void)
 {
 
-	/* USER CODE BEGIN USART1_Init 0 */
+  /* USER CODE BEGIN USART1_Init 0 */
 
-	/* USER CODE END USART1_Init 0 */
+  /* USER CODE END USART1_Init 0 */
 
-	/* USER CODE BEGIN USART1_Init 1 */
+  /* USER CODE BEGIN USART1_Init 1 */
 
-	/* USER CODE END USART1_Init 1 */
-	huart1.Instance = USART1;
-	huart1.Init.BaudRate = 115200;
-	huart1.Init.WordLength = UART_WORDLENGTH_8B;
-	huart1.Init.StopBits = UART_STOPBITS_1;
-	huart1.Init.Parity = UART_PARITY_NONE;
-	huart1.Init.Mode = UART_MODE_TX_RX;
-	huart1.Init.HwFlowCtl = UART_HWCONTROL_NONE;
-	huart1.Init.OverSampling = UART_OVERSAMPLING_16;
-	if (HAL_UART_Init(&huart1) != HAL_OK)
-	{
-		Error_Handler();
-	}
-	/* USER CODE BEGIN USART1_Init 2 */
+  /* USER CODE END USART1_Init 1 */
+  huart1.Instance = USART1;
+  huart1.Init.BaudRate = 115200;
+  huart1.Init.WordLength = UART_WORDLENGTH_8B;
+  huart1.Init.StopBits = UART_STOPBITS_1;
+  huart1.Init.Parity = UART_PARITY_NONE;
+  huart1.Init.Mode = UART_MODE_TX_RX;
+  huart1.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  huart1.Init.OverSampling = UART_OVERSAMPLING_16;
+  if (HAL_UART_Init(&huart1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN USART1_Init 2 */
 
-	/* USER CODE END USART1_Init 2 */
+  /* USER CODE END USART1_Init 2 */
 
 }
 
 /**
- * Enable DMA controller clock
- */
+  * Enable DMA controller clock
+  */
 static void MX_DMA_Init(void)
 {
 
-	/* DMA controller clock enable */
-	__HAL_RCC_DMA2_CLK_ENABLE();
+  /* DMA controller clock enable */
+  __HAL_RCC_DMA2_CLK_ENABLE();
 
-	/* DMA interrupt init */
-	/* DMA2_Stream2_IRQn interrupt configuration */
-	HAL_NVIC_SetPriority(DMA2_Stream2_IRQn, 5, 0);
-	HAL_NVIC_EnableIRQ(DMA2_Stream2_IRQn);
+  /* DMA interrupt init */
+  /* DMA2_Stream2_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA2_Stream2_IRQn, 5, 0);
+  HAL_NVIC_EnableIRQ(DMA2_Stream2_IRQn);
 
 }
 
 /**
- * @brief GPIO Initialization Function
- * @param None
- * @retval None
- */
+  * @brief GPIO Initialization Function
+  * @param None
+  * @retval None
+  */
 static void MX_GPIO_Init(void)
 {
-	GPIO_InitTypeDef GPIO_InitStruct = {0};
-	/* USER CODE BEGIN MX_GPIO_Init_1 */
-	/* USER CODE END MX_GPIO_Init_1 */
+  GPIO_InitTypeDef GPIO_InitStruct = {0};
+/* USER CODE BEGIN MX_GPIO_Init_1 */
+/* USER CODE END MX_GPIO_Init_1 */
 
-	/* GPIO Ports Clock Enable */
-	__HAL_RCC_GPIOH_CLK_ENABLE();
-	__HAL_RCC_GPIOA_CLK_ENABLE();
-	__HAL_RCC_GPIOB_CLK_ENABLE();
+  /* GPIO Ports Clock Enable */
+  __HAL_RCC_GPIOH_CLK_ENABLE();
+  __HAL_RCC_GPIOA_CLK_ENABLE();
+  __HAL_RCC_GPIOB_CLK_ENABLE();
 
-	/*Configure GPIO pin Output Level */
-	HAL_GPIO_WritePin(GPIOA, NRF_CSN_PIN_Pin|NRF_CE_PIN_Pin, GPIO_PIN_RESET);
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOA, NRF_CSN_PIN_Pin|NRF_CE_PIN_Pin, GPIO_PIN_RESET);
 
-	/*Configure GPIO pin : PA2 */
-	GPIO_InitStruct.Pin = GPIO_PIN_2;
-	GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
-	GPIO_InitStruct.Pull = GPIO_NOPULL;
-	HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+  /*Configure GPIO pin : PA2 */
+  GPIO_InitStruct.Pin = GPIO_PIN_2;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-	/*Configure GPIO pins : NRF_CSN_PIN_Pin NRF_CE_PIN_Pin */
-	GPIO_InitStruct.Pin = NRF_CSN_PIN_Pin|NRF_CE_PIN_Pin;
-	GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-	GPIO_InitStruct.Pull = GPIO_NOPULL;
-	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-	HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+  /*Configure GPIO pins : NRF_CSN_PIN_Pin NRF_CE_PIN_Pin */
+  GPIO_InitStruct.Pin = NRF_CSN_PIN_Pin|NRF_CE_PIN_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-	/* EXTI interrupt init*/
-	HAL_NVIC_SetPriority(EXTI2_IRQn, 5, 0);
-	HAL_NVIC_EnableIRQ(EXTI2_IRQn);
+  /* EXTI interrupt init*/
+  HAL_NVIC_SetPriority(EXTI2_IRQn, 5, 0);
+  HAL_NVIC_EnableIRQ(EXTI2_IRQn);
 
-	/* USER CODE BEGIN MX_GPIO_Init_2 */
-	/* USER CODE END MX_GPIO_Init_2 */
+/* USER CODE BEGIN MX_GPIO_Init_2 */
+/* USER CODE END MX_GPIO_Init_2 */
 }
 
 /* USER CODE BEGIN 4 */
@@ -822,16 +800,16 @@ void _vSSD1306_DontPassWarning(DontPassWarningDirection_t Copy_u8Direction)
  * @retval None
  */
 /* USER CODE END Header_StartDefaultTask */
-//void StartDefaultTask(void *argument)
-//{
-/* USER CODE BEGIN 5 */
-/* Infinite loop */
-// for(;;)
-// {
-//   osDelay(1);
-// }
-/* USER CODE END 5 */
-//}
+void StartDefaultTask(void *argument)
+{
+  /* USER CODE BEGIN 5 */
+	/* Infinite loop */
+	// for(;;)
+	// {
+	//   osDelay(1);
+	// }
+  /* USER CODE END 5 */
+}
 
 /* USER CODE BEGIN Header_Init_Task */
 /**
@@ -842,7 +820,7 @@ void _vSSD1306_DontPassWarning(DontPassWarningDirection_t Copy_u8Direction)
 /* USER CODE END Header_Init_Task */
 void Init_Task(void *argument)
 {
-	/* USER CODE BEGIN Init_Task */
+  /* USER CODE BEGIN Init_Task */
 
 	/* Initializing SSD1306 ( OLED Display ) */
 	SSD1306_Init();
@@ -868,7 +846,7 @@ void Init_Task(void *argument)
 	/* Terminating StartupTask as It is No longer Important in the Sys */
 	osThreadTerminate(Startup_TaskHandle);
 
-	/* USER CODE END Init_Task */
+  /* USER CODE END Init_Task */
 }
 
 /* USER CODE BEGIN Header_Distance_Calc */
@@ -880,7 +858,7 @@ void Init_Task(void *argument)
 /* USER CODE END Header_Distance_Calc */
 void Distance_Calc(void *argument)
 {
-	/* USER CODE BEGIN Distance_Calc */
+  /* USER CODE BEGIN Distance_Calc */
 	/* Infinite loop */
 	for(;;)
 	{
@@ -901,7 +879,7 @@ void Distance_Calc(void *argument)
 		 */
 		osEventFlagsSet( EventGroupHandle , ALGO_CheckonCalc ) ;
 	}
-	/* USER CODE END Distance_Calc */
+  /* USER CODE END Distance_Calc */
 }
 
 /* USER CODE BEGIN Header_Localization */
@@ -913,7 +891,7 @@ void Distance_Calc(void *argument)
 /* USER CODE END Header_Localization */
 void Localization(void *argument)
 {
-	/* USER CODE BEGIN Localization */
+  /* USER CODE BEGIN Localization */
 	/* Infinite loop */
 	for(;;)
 	{
@@ -938,7 +916,7 @@ void Localization(void *argument)
 		/* TODO: Timing Should Be Considered */
 		osDelay(2000);
 	}
-	/* USER CODE END Localization */
+  /* USER CODE END Localization */
 }
 
 /* USER CODE BEGIN Header_Check_Algorithm */
@@ -950,7 +928,7 @@ void Localization(void *argument)
 /* USER CODE END Header_Check_Algorithm */
 void Check_Algorithm(void *argument)
 {
-	/* USER CODE BEGIN Check_Algorithm */
+  /* USER CODE BEGIN Check_Algorithm */
 	/* Infinite loop */
 	for(;;)
 	{
@@ -974,7 +952,7 @@ void Check_Algorithm(void *argument)
 			HAL_UART_Transmit(&huart1, (uint8_t*)RPI_MOVE, 1, HAL_MAX_DELAY ) ;
 		}
 	}
-	/* USER CODE END Check_Algorithm */
+  /* USER CODE END Check_Algorithm */
 }
 
 /* USER CODE BEGIN Header_BSW_Algorithm */
@@ -986,7 +964,7 @@ void Check_Algorithm(void *argument)
 /* USER CODE END Header_BSW_Algorithm */
 void BSW_Algorithm(void *argument)
 {
-	/* USER CODE BEGIN BSW_Algorithm */
+  /* USER CODE BEGIN BSW_Algorithm */
 	bool Local_BSWLeft = false ;
 	bool Local_BSWRight= false ;
 	bool Local_BSWL_LastState = false ;
@@ -1063,7 +1041,7 @@ void BSW_Algorithm(void *argument)
 
 
 	}
-	/* USER CODE END BSW_Algorithm */
+  /* USER CODE END BSW_Algorithm */
 }
 
 /* USER CODE BEGIN Header_DPW_Algorithm */
@@ -1075,7 +1053,7 @@ void BSW_Algorithm(void *argument)
 /* USER CODE END Header_DPW_Algorithm */
 void DPW_Algorithm(void *argument)
 {
-	/* USER CODE BEGIN DPW_Algorithm */
+  /* USER CODE BEGIN DPW_Algorithm */
 	bool Local_DPWLeft = false ;
 	bool Local_DPWRight= false ;
 	bool Local_DPWL_LastState = false ;
@@ -1166,7 +1144,7 @@ void DPW_Algorithm(void *argument)
 		}
 
 	}
-	/* USER CODE END DPW_Algorithm */
+  /* USER CODE END DPW_Algorithm */
 }
 
 /* USER CODE BEGIN Header_Wireless_Receiving */
@@ -1178,7 +1156,7 @@ void DPW_Algorithm(void *argument)
 /* USER CODE END Header_Wireless_Receiving */
 void Wireless_Receiving(void *argument)
 {
-	/* USER CODE BEGIN Wireless_Receiving */
+  /* USER CODE BEGIN Wireless_Receiving */
 	/* Infinite loop */
 	for(;;)
 	{
@@ -1270,7 +1248,7 @@ void Wireless_Receiving(void *argument)
 		}
 		osDelay(1);
 	}
-	/* USER CODE END Wireless_Receiving */
+  /* USER CODE END Wireless_Receiving */
 }
 
 /* USER CODE BEGIN Header_FCW_Algorithm */
@@ -1282,7 +1260,7 @@ void Wireless_Receiving(void *argument)
 /* USER CODE END Header_FCW_Algorithm */
 void FCW_Algorithm(void *argument)
 {
-	/* USER CODE BEGIN FCW_Algorithm */
+  /* USER CODE BEGIN FCW_Algorithm */
 	/* Infinite loop */
 	for(;;)
 	{
@@ -1295,7 +1273,7 @@ void FCW_Algorithm(void *argument)
 		SSD1306_UpdateScreen() ;
 
 	}
-	/* USER CODE END FCW_Algorithm */
+  /* USER CODE END FCW_Algorithm */
 }
 
 /* USER CODE BEGIN Header_EEBL_Algorithm */
@@ -1307,7 +1285,7 @@ void FCW_Algorithm(void *argument)
 /* USER CODE END Header_EEBL_Algorithm */
 void EEBL_Algorithm(void *argument)
 {
-	/* USER CODE BEGIN EEBL_Algorithm */
+  /* USER CODE BEGIN EEBL_Algorithm */
 	/* Infinite loop */
 	for(;;)
 	{
@@ -1330,58 +1308,78 @@ void EEBL_Algorithm(void *argument)
 		//sending to backward cars to process the case using NRF
 
 	}
-	/* USER CODE END EEBL_Algorithm */
+  /* USER CODE END EEBL_Algorithm */
+}
+
+/* USER CODE BEGIN Header_Ask_LidarData */
+/**
+ * @brief Function implementing the Task_LidarData thread.
+ * @param argument: Not used
+ * @retval None
+ */
+/* USER CODE END Header_Ask_LidarData */
+void Ask_LidarData(void *argument)
+{
+  /* USER CODE BEGIN Ask_LidarData */
+	/* Infinite loop */
+	for(;;)
+	{
+		HAL_UART_Transmit(&huart1, (uint8_t*)ASK_DATA, 1, HAL_MAX_DELAY ) ;
+
+		osDelay(1000);
+	}
+  /* USER CODE END Ask_LidarData */
 }
 
 /**
- * @brief  Period elapsed callback in non blocking mode
- * @note   This function is called  when TIM4 interrupt took place, inside
- * HAL_TIM_IRQHandler(). It makes a direct call to HAL_IncTick() to increment
- * a global variable "uwTick" used as application time base.
- * @param  htim : TIM handle
- * @retval None
- */
+  * @brief  Period elapsed callback in non blocking mode
+  * @note   This function is called  when TIM4 interrupt took place, inside
+  * HAL_TIM_IRQHandler(). It makes a direct call to HAL_IncTick() to increment
+  * a global variable "uwTick" used as application time base.
+  * @param  htim : TIM handle
+  * @retval None
+  */
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
-	/* USER CODE BEGIN Callback 0 */
+  /* USER CODE BEGIN Callback 0 */
 
-	/* USER CODE END Callback 0 */
-	if (htim->Instance == TIM4) {
-		HAL_IncTick();
-	}
-	/* USER CODE BEGIN Callback 1 */
+  /* USER CODE END Callback 0 */
+  if (htim->Instance == TIM4) {
+    HAL_IncTick();
+  }
+  /* USER CODE BEGIN Callback 1 */
 
-	/* USER CODE END Callback 1 */
+  /* USER CODE END Callback 1 */
 }
 
 /**
- * @brief  This function is executed in case of error occurrence.
- * @retval None
- */
+  * @brief  This function is executed in case of error occurrence.
+  * @retval None
+  */
 void Error_Handler(void)
 {
-	/* USER CODE BEGIN Error_Handler_Debug */
+  /* USER CODE BEGIN Error_Handler_Debug */
 	/* User can add his own implementation to report the HAL error return state */
 	__disable_irq();
 	while (1)
 	{
 	}
-	/* USER CODE END Error_Handler_Debug */
+  /* USER CODE END Error_Handler_Debug */
 }
 
 #ifdef  USE_FULL_ASSERT
 /**
- * @brief  Reports the name of the source file and the source line number
- *         where the assert_param error has occurred.
- * @param  file: pointer to the source file name
- * @param  line: assert_param error line source number
- * @retval None
- */
+  * @brief  Reports the name of the source file and the source line number
+  *         where the assert_param error has occurred.
+  * @param  file: pointer to the source file name
+  * @param  line: assert_param error line source number
+  * @retval None
+  */
 void assert_failed(uint8_t *file, uint32_t line)
 {
-	/* USER CODE BEGIN 6 */
+  /* USER CODE BEGIN 6 */
 	/* User can add his own implementation to report the file name and line number,
      ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
-	/* USER CODE END 6 */
+  /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
