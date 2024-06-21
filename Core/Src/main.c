@@ -301,7 +301,8 @@ int main(void)
 	MX_TIM10_Init();
 	MX_I2C1_Init();
 	/* USER CODE BEGIN 2 */
-
+	/* Initialize DMA with UART to Generate Interrupt When Receiving all 360 Angle Distances */
+	HAL_UART_Receive_DMA(&huart1, Distances_Buffer_str, (uint16_t)(TOTAL_ANGLES*5));
 	/* USER CODE END 2 */
 
 	/* Init scheduler */
@@ -707,6 +708,7 @@ uint16_t * _CalcAvgDistance( uint16_t * Data_Arr )
 {
 	uint16_t Local_CounterI = 0 ;
 	int16_t Local_CounterII = 0;
+	uint8_t Local_Zeros	= 0 ;
 	static uint16_t Local_AvgDistance[8] = {0};
 
 	for (Local_CounterI = 0; Local_CounterI < 8; Local_CounterI++) {
@@ -718,11 +720,19 @@ uint16_t * _CalcAvgDistance( uint16_t * Data_Arr )
 			// Make sure the index is within bounds (0-359)
 			uint16_t Index = (Local_CounterII + TOTAL_ANGLES) % TOTAL_ANGLES;
 
-			Local_TempI += Data_Arr[Index];
+			if( 0==Data_Arr[Index] )
+			{
+				Local_Zeros++;
+			}
+			else
+			{
+				Local_TempI += Data_Arr[Index];
+			}
 		}
 
 		// Calculate average for this angle
-		Local_AvgDistance[Local_CounterI] = Local_TempI / 7;
+		Local_AvgDistance[Local_CounterI] = Local_TempI / (7-Local_Zeros);
+		Local_Zeros = 0 ;
 	}
 
 	return Local_AvgDistance;
@@ -833,8 +843,7 @@ void _vSSD1306_DontPassWarning(DontPassWarningDirection_t Copy_u8Direction)
 void Init_Task(void *argument)
 {
 	/* USER CODE BEGIN Init_Task */
-	/* Initialize DMA with UART to Generate Interrupt When Receiving all 360 Angle Distances */
-	HAL_UART_Receive_DMA(&huart1, Distances_Buffer_str, (uint16_t)(TOTAL_ANGLES*5));
+
 	/* Initializing SSD1306 ( OLED Display ) */
 	SSD1306_Init();
 	/* NRF Module Initialization -> Less Then 0.5 Sec */
