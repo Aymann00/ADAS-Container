@@ -31,7 +31,7 @@ This project aims to enhance road safety through the development of an Integrate
 ## Technologies Used
 - **Hardware:** STM32F411 (Black Pill), nRF24L01 module, RPLIDAR, Raspberry Pi Camera (OV5647), Servo 995G, DC Motor (JGA25-370), Motor Driver L298N Module, DC-DC Buck Converter (LM2596).
 - **Software:** FreeRTOS, GIT, GitHub.
-- 
+  
 ## How to Use
 
 ### System Setup
