@@ -117,5 +117,7 @@ extern uint8_t ForwardCollision_Bitmap[];
 extern uint8_t BlindSpotWarning_Bitmap[];
 extern uint8_t EEBL_Bitmap[];
 extern uint8_t DontPassWarning_Bitmap[];
+extern uint8_t SafeToPassVisualFromRight_Bitmap[];
+extern uint8_t SafeToPassVisualFromLeft_Bitmap[];
 
 #endif /* INC_FONTS_H_ */

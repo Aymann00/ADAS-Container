@@ -42,7 +42,8 @@ extern "C" {
  */
 typedef enum{
 	BlindSpotDirection_Right = 0x77 ,/**< BlindSpotDirection_Right */
-	BlindSpotDirection_Left  = 0x88  /**< BlindSpotDirection_Left */
+	BlindSpotDirection_Left  = 0x88 ,
+	BlindSpodDirection_Both  = 0x99/**< BlindSpotDirection_Left */
 }BlindSpotDirection_t;
 
 /**
@@ -107,6 +108,18 @@ void _vSSD1306_EmergencyElectronicBrake(void) ;
  * 			 The Function ( SSD1306_UpdateScreen ) Should Be Called To Update the Display
  */
 void _vSSD1306_DontPassWarning(DontPassWarningDirection_t Copy_u8Direction) ;
+
+
+/**
+ * @fn  	: _vSSD1306_SafeToPass(DontPassWarningDirection_t)
+ * @brief 	: For Safe To Pass Visualization on SSD1306
+ * @param 	: Copy_u8Direction => Direction of Safe To Pass Detected By Algorithm ,
+ * 								For Options Go To ( @DontPassWarningDirection_t )
+ * @note 	: After Calling This Function ,
+ * 			 The Function ( SSD1306_UpdateScreen ) Should Be Called To Update the Display
+ */
+void _vSSD1306_SafeToPass(DontPassWarningDirection_t Copy_u8Direction) ;
+
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
